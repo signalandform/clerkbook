@@ -22,20 +22,21 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
   const isProtected = protectedPaths.some((p) => pathname === p || pathname.startsWith(p + '/'));
 
-  if (isProtected) {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      const signIn = new URL('/signin', request.url);
-      signIn.searchParams.set('next', pathname);
-      return NextResponse.redirect(signIn);
-    }
+  if (pathname === '/' && user) {
+    return NextResponse.redirect(new URL('/library', request.url));
+  }
+
+  if (isProtected && !user) {
+    const signIn = new URL('/signin', request.url);
+    signIn.searchParams.set('next', pathname);
+    return NextResponse.redirect(signIn);
   }
 
   return response;
