@@ -1,6 +1,8 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { AppShell } from '@/app/components/app-shell';
 
 type Item = {
   id: string;
@@ -27,21 +29,25 @@ export default function LibraryPage() {
   }, []);
 
   return (
-    <main className="mx-auto max-w-2xl p-6">
-      <h1 className="text-xl font-semibold">Library</h1>
-      <p className="mt-2 text-sm text-gray-600">
-        Your captured items. Status: captured → extracted → enriched.
-      </p>
+    <AppShell>
+      <main className="mx-auto max-w-2xl p-6">
+        <h1 className="text-xl font-semibold">Library</h1>
+        <p className="mt-2 text-sm text-gray-600">
+          Your captured items. Add content from New item. Each item is processed in the background: captured → extracted → enriched.
+        </p>
 
-      {loading && <p className="mt-4 text-sm text-gray-500">Loading…</p>}
-      {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+        {loading && <p className="mt-4 text-sm text-gray-500">Loading…</p>}
+        {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
 
-      {!loading && !error && (
-        <ul className="mt-6 space-y-3">
-          {items.length === 0 ? (
-            <li className="text-sm text-gray-500">No items yet.</li>
-          ) : (
-            items.map((item) => (
+        {!loading && !error && items.length === 0 && (
+          <div className="mt-6 rounded border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
+            No items yet. <Link href="/new" className="font-medium text-gray-900 underline">Go to New item</Link> to add your first URL, paste, or file.
+          </div>
+        )}
+
+        {!loading && !error && items.length > 0 && (
+          <ul className="mt-6 space-y-3">
+            {items.map((item) => (
               <li
                 key={item.id}
                 className="rounded border border-gray-200 bg-gray-50 p-3 text-sm"
@@ -55,14 +61,10 @@ export default function LibraryPage() {
                   <span>{new Date(item.created_at).toLocaleDateString()}</span>
                 </div>
               </li>
-            ))
-          )}
-        </ul>
-      )}
-
-      <p className="mt-8 text-xs text-gray-500">
-        <a href="/" className="underline">Back to home</a>
-      </p>
-    </main>
+            ))}
+          </ul>
+        )}
+      </main>
+    </AppShell>
   );
 }
