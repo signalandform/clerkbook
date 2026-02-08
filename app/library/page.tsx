@@ -48,18 +48,20 @@ export default function LibraryPage() {
         {!loading && !error && items.length > 0 && (
           <ul className="mt-6 space-y-3">
             {items.map((item) => (
-              <li
-                key={item.id}
-                className="rounded border border-gray-200 bg-gray-50 p-3 text-sm"
-              >
-                <div className="font-medium text-gray-900">
-                  {item.title || item.id.slice(0, 8) + '…'}
-                </div>
-                <div className="mt-1 flex gap-2 text-xs text-gray-500">
-                  <span>{item.source_type}</span>
-                  <span>{item.status}</span>
-                  <span>{new Date(item.created_at).toLocaleDateString()}</span>
-                </div>
+              <li key={item.id}>
+                <Link
+                  href={`/library/${item.id}`}
+                  className="block rounded border border-gray-200 bg-gray-50 p-3 text-sm transition-colors hover:border-gray-300 hover:bg-gray-100"
+                >
+                  <div className="font-medium text-gray-900">
+                    {item.title || item.id.slice(0, 8) + '…'}
+                  </div>
+                  <div className="mt-1 flex gap-2 text-xs text-gray-500">
+                    <span>{item.source_type}</span>
+                    <span>{item.status}</span>
+                    <span>{new Date(item.created_at).toLocaleDateString()}</span>
+                  </div>
+                </Link>
               </li>
             ))}
           </ul>
