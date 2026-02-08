@@ -1,4 +1,9 @@
-export default function Home() {
+import Link from 'next/link';
+import { getUser } from '@/lib/supabase/server';
+
+export default async function Home() {
+  const user = await getUser();
+
   return (
     <main className="mx-auto max-w-2xl p-6">
       <h1 className="text-2xl font-semibold">Clerkbook</h1>
@@ -7,14 +12,22 @@ export default function Home() {
       </p>
 
       <div className="mt-6 space-y-3">
-        <a className="underline" href="/new">New item</a>
-        <br />
-        <a className="underline" href="/library">Library</a>
+        {user ? (
+          <>
+            <Link className="underline" href="/new">
+              New item
+            </Link>
+            <br />
+            <Link className="underline" href="/library">
+              Library
+            </Link>
+          </>
+        ) : (
+          <Link className="underline" href="/signin">
+            Sign in
+          </Link>
+        )}
       </div>
-
-      <p className="mt-8 text-xs text-gray-500">
-        Scaffold only — auth + capture + jobs coming next.
-      </p>
     </main>
   );
 }
