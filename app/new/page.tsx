@@ -105,13 +105,13 @@ export default function NewItemPage() {
   return (
     <AppShell>
       <main className="mx-auto max-w-2xl p-6">
-        <h1 className="text-xl font-semibold">New item</h1>
-        <p className="mt-2 text-sm text-gray-600">
+        <h1 className="text-xl font-semibold text-[var(--fg-default)]">New item</h1>
+        <p className="mt-2 text-sm text-[var(--fg-muted)]">
           Save URLs, paste text, or upload documents (PDF, DOCX, TXT, MD). Each item is extracted and enriched automatically.
         </p>
 
-        <section className="mt-8 border-t border-gray-200 pt-6">
-          <h2 className="text-sm font-medium text-gray-700">Capture URL</h2>
+        <section className="mt-8 border-t border-[var(--border-default)] pt-6">
+          <h2 className="text-sm font-medium text-[var(--fg-default)]">Capture URL</h2>
           <form onSubmit={handleUrlSubmit} className="mt-2 flex gap-2">
             <input
               type="url"
@@ -119,32 +119,32 @@ export default function NewItemPage() {
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://..."
               required
-              className="flex-1 rounded border border-gray-300 px-3 py-2 text-sm"
+              className="flex-1 rounded-md border border-[var(--border-default)] bg-[var(--control-bg)] px-3 py-2 text-sm text-[var(--fg-default)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             />
             <button
               type="submit"
               disabled={urlStatus === 'loading'}
-              className="rounded bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              className="rounded bg-[var(--btn-primary)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--btn-primary-hover)] disabled:opacity-50"
             >
               Capture URL
             </button>
           </form>
           {urlMessage && (
-            <p className={`mt-1 text-sm ${urlStatus === 'error' ? 'text-red-600' : 'text-green-600'}`}>
+            <p className={`mt-1 text-sm ${urlStatus === 'error' ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}>
               {urlMessage}
             </p>
           )}
         </section>
 
-        <section className="mt-8 border-t border-gray-200 pt-6">
-          <h2 className="text-sm font-medium text-gray-700">Capture paste</h2>
+        <section className="mt-8 border-t border-[var(--border-default)] pt-6">
+          <h2 className="text-sm font-medium text-[var(--fg-default)]">Capture paste</h2>
           <form onSubmit={handlePasteSubmit} className="mt-2 space-y-2">
             <input
               type="text"
               value={pasteTitle}
               onChange={(e) => setPasteTitle(e.target.value)}
               placeholder="Title (optional)"
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-[var(--border-default)] bg-[var(--control-bg)] px-3 py-2 text-sm text-[var(--fg-default)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             />
             <textarea
               value={pasteText}
@@ -152,49 +152,49 @@ export default function NewItemPage() {
               placeholder="Paste text..."
               required
               rows={4}
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-[var(--border-default)] bg-[var(--control-bg)] px-3 py-2 text-sm text-[var(--fg-default)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             />
             <button
               type="submit"
               disabled={pasteStatus === 'loading'}
-              className="rounded bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              className="rounded bg-[var(--btn-primary)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--btn-primary-hover)] disabled:opacity-50"
             >
               Capture paste
             </button>
           </form>
           {pasteMessage && (
-            <p className={`mt-1 text-sm ${pasteStatus === 'error' ? 'text-red-600' : 'text-green-600'}`}>
+            <p className={`mt-1 text-sm ${pasteStatus === 'error' ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}>
               {pasteMessage}
             </p>
           )}
         </section>
 
-        <section className="mt-8 border-t border-gray-200 pt-6">
-          <h2 className="text-sm font-medium text-gray-700">Capture file</h2>
+        <section className="mt-8 border-t border-[var(--border-default)] pt-6">
+          <h2 className="text-sm font-medium text-[var(--fg-default)]">Capture file</h2>
           <form onSubmit={handleFileSubmit} className="mt-2 space-y-2">
             <input
               type="text"
               value={fileTitle}
               onChange={(e) => setFileTitle(e.target.value)}
               placeholder="Title (optional)"
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-[var(--border-default)] bg-[var(--control-bg)] px-3 py-2 text-sm text-[var(--fg-default)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             />
             <input
               type="file"
               accept=".pdf,.docx,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="block w-full text-sm text-gray-500 file:mr-2 file:rounded file:border-0 file:bg-gray-100 file:px-4 file:py-2 file:text-sm file:font-medium"
+              className="block w-full text-sm text-[var(--fg-muted)] file:mr-2 file:rounded file:border file:border-[var(--border-default)] file:bg-[var(--draft-muted)] file:px-4 file:py-2 file:text-sm file:font-medium file:text-[var(--fg-default)]"
             />
             <button
               type="submit"
               disabled={fileStatus === 'loading' || !file}
-              className="rounded bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              className="rounded bg-[var(--btn-primary)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--btn-primary-hover)] disabled:opacity-50"
             >
               Capture file
             </button>
           </form>
           {fileMessage && (
-            <p className={`mt-1 text-sm ${fileStatus === 'error' ? 'text-red-600' : 'text-green-600'}`}>
+            <p className={`mt-1 text-sm ${fileStatus === 'error' ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}>
               {fileMessage}
             </p>
           )}

@@ -58,8 +58,8 @@ export default function LibraryPage() {
   return (
     <AppShell>
       <main className="mx-auto max-w-2xl p-6">
-        <h1 className="text-xl font-semibold">Library</h1>
-        <p className="mt-2 text-sm text-gray-600">
+        <h1 className="text-xl font-semibold text-[var(--fg-default)]">Library</h1>
+        <p className="mt-2 text-sm text-[var(--fg-muted)]">
           Your captured items. Add content from New item. Each item is processed in the background: captured → extracted → enriched.
         </p>
 
@@ -69,18 +69,18 @@ export default function LibraryPage() {
             placeholder="Search by title or summary…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+            className="w-full rounded-md border border-[var(--border-default)] bg-[var(--control-bg)] px-3 py-2 text-sm text-[var(--fg-default)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
           />
         </div>
 
-        {loading && <p className="mt-4 text-sm text-gray-500">Loading…</p>}
-        {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+        {loading && <p className="mt-4 text-sm text-[var(--fg-muted)]">Loading…</p>}
+        {error && <p className="mt-4 text-sm text-[var(--danger)]">{error}</p>}
 
         {!loading && !error && items.length === 0 && (
-          <div className="mt-6 rounded border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
+          <div className="mt-6 rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] p-4 text-sm text-[var(--fg-muted)]">
             {debouncedQuery
               ? 'No matching items.'
-              : <>No items yet. <Link href="/new" className="font-medium text-gray-900 underline">Go to New item</Link> to add your first URL, paste, or file.</>}
+              : <>No items yet. <Link href="/new" className="font-medium text-[var(--accent)] underline hover:no-underline">Go to New item</Link> to add your first URL, paste, or file.</>}
           </div>
         )}
 
@@ -98,16 +98,16 @@ export default function LibraryPage() {
                 <li key={item.id}>
                   <Link
                     href={`/items/${item.id}`}
-                    className="block rounded border border-gray-200 bg-gray-50 p-3 text-sm transition-colors hover:border-gray-300 hover:bg-gray-100"
+                    className="block rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] p-3 text-sm transition-colors hover:border-[var(--border-default)] hover:bg-[var(--draft-muted)]"
                   >
-                    <div className="font-medium text-gray-900">
+                    <div className="font-medium text-[var(--fg-default)]">
                       {item.title || item.id.slice(0, 8) + '…'}
                     </div>
                     {snippetDisplay && (
-                      <p className="mt-1 text-gray-600">{snippetDisplay}</p>
+                      <p className="mt-1 text-[var(--fg-muted)]">{snippetDisplay}</p>
                     )}
                     {item.status !== 'enriched' && !snippetDisplay && (
-                      <p className="mt-1 text-xs text-gray-400">Processing…</p>
+                      <p className="mt-1 text-xs text-[var(--fg-muted)] opacity-70">Processing…</p>
                     )}
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                       {item.tags && item.tags.length > 0 && (
@@ -115,17 +115,17 @@ export default function LibraryPage() {
                           {item.tags.slice(0, 5).map((tag) => (
                             <span
                               key={tag}
-                              className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-700"
+                              className="rounded-md bg-[var(--draft-muted)] px-1.5 py-0.5 text-xs text-[var(--fg-muted)]"
                             >
                               {tag}
                             </span>
                           ))}
                           {item.tags.length > 5 && (
-                            <span className="text-xs text-gray-400">+{item.tags.length - 5}</span>
+                            <span className="text-xs text-[var(--fg-muted)] opacity-70">+{item.tags.length - 5}</span>
                           )}
                         </span>
                       )}
-                      <span className="flex gap-2 text-xs text-gray-500">
+                      <span className="flex gap-2 text-xs text-[var(--fg-muted)]">
                         <span>{item.source_type}</span>
                         <span>{item.status}</span>
                         <span>{new Date(item.created_at).toLocaleDateString()}</span>

@@ -34,14 +34,14 @@ function SignInForm() {
 
   return (
     <main className="mx-auto max-w-md p-6">
-      <h1 className="text-xl font-semibold">Sign in</h1>
-      <p className="mt-2 text-sm text-gray-600">
+      <h1 className="text-xl font-semibold text-[var(--fg-default)]">Sign in</h1>
+      <p className="mt-2 text-sm text-[var(--fg-muted)]">
         Enter your email and password.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="email" className="block text-sm font-medium text-[var(--fg-default)]">
             Email
           </label>
           <input
@@ -51,11 +51,11 @@ function SignInForm() {
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 text-sm"
+            className="mt-1 block w-full rounded-md border border-[var(--border-default)] bg-[var(--control-bg)] px-3 py-2 text-sm text-[var(--fg-default)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
           />
         </div>
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="password" className="block text-sm font-medium text-[var(--fg-default)]">
             Password
           </label>
           <input
@@ -65,26 +65,26 @@ function SignInForm() {
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 text-sm"
+            className="mt-1 block w-full rounded-md border border-[var(--border-default)] bg-[var(--control-bg)] px-3 py-2 text-sm text-[var(--fg-default)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
           />
         </div>
         {message && status === 'error' && (
-          <p className="text-sm text-red-600">{message}</p>
+          <p className="text-sm text-[var(--danger)]">{message}</p>
         )}
         <button
           type="submit"
           disabled={status === 'loading'}
-          className="w-full rounded bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="w-full rounded bg-[var(--btn-primary)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--btn-primary-hover)] disabled:opacity-50"
         >
           {status === 'loading' ? 'Signing in…' : 'Sign in'}
         </button>
       </form>
 
-      <p className="mt-6 text-xs text-gray-500">
-        Don&apos;t have an account? <a href="/signup" className="underline">Sign up</a>
+      <p className="mt-6 text-xs text-[var(--fg-muted)]">
+        Don&apos;t have an account? <a href="/signup" className="text-[var(--accent)] underline hover:no-underline">Sign up</a>
       </p>
-      <p className="mt-2 text-xs text-gray-500">
-        <a href="/" className="underline">
+      <p className="mt-2 text-xs text-[var(--fg-muted)]">
+        <a href="/" className="text-[var(--accent)] underline hover:no-underline">
           Back to home
         </a>
       </p>
@@ -94,7 +94,7 @@ function SignInForm() {
 
 export default function SignInPage() {
   return (
-    <Suspense fallback={<main className="mx-auto max-w-md p-6"><p className="text-sm text-gray-500">Loading…</p></main>}>
+    <Suspense fallback={<main className="mx-auto max-w-md p-6"><p className="text-sm text-[var(--fg-muted)]">Loading…</p></main>}>
       <SignInForm />
     </Suspense>
   );

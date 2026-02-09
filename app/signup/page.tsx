@@ -44,12 +44,12 @@ function SignUpForm() {
   if (status === 'success') {
     return (
       <main className="mx-auto max-w-md p-6">
-        <h1 className="text-xl font-semibold">Sign up</h1>
-        <div className="mt-6 rounded border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+        <h1 className="text-xl font-semibold text-[var(--fg-default)]">Sign up</h1>
+        <div className="mt-6 rounded-lg border border-[var(--border-default)] bg-[var(--success-muted)] p-4 text-sm text-[var(--success)]">
           {message}
         </div>
-        <p className="mt-6 text-xs text-gray-500">
-          <a href="/signin" className="underline">Sign in</a>
+        <p className="mt-6 text-xs text-[var(--fg-muted)]">
+          <a href="/signin" className="text-[var(--accent)] underline hover:no-underline">Sign in</a>
         </p>
       </main>
     );
@@ -57,14 +57,14 @@ function SignUpForm() {
 
   return (
     <main className="mx-auto max-w-md p-6">
-      <h1 className="text-xl font-semibold">Sign up</h1>
-      <p className="mt-2 text-sm text-gray-600">
+      <h1 className="text-xl font-semibold text-[var(--fg-default)]">Sign up</h1>
+      <p className="mt-2 text-sm text-[var(--fg-muted)]">
         Create an account with your email and password.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="email" className="block text-sm font-medium text-[var(--fg-default)]">
             Email
           </label>
           <input
@@ -74,11 +74,11 @@ function SignUpForm() {
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 text-sm"
+            className="mt-1 block w-full rounded-md border border-[var(--border-default)] bg-[var(--control-bg)] px-3 py-2 text-sm text-[var(--fg-default)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
           />
         </div>
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="password" className="block text-sm font-medium text-[var(--fg-default)]">
             Password
           </label>
           <input
@@ -88,11 +88,11 @@ function SignUpForm() {
             autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 text-sm"
+            className="mt-1 block w-full rounded-md border border-[var(--border-default)] bg-[var(--control-bg)] px-3 py-2 text-sm text-[var(--fg-default)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
           />
         </div>
         <div>
-          <label htmlFor="confirm_password" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="confirm_password" className="block text-sm font-medium text-[var(--fg-default)]">
             Confirm password
           </label>
           <input
@@ -102,26 +102,26 @@ function SignUpForm() {
             autoComplete="new-password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 text-sm"
+            className="mt-1 block w-full rounded-md border border-[var(--border-default)] bg-[var(--control-bg)] px-3 py-2 text-sm text-[var(--fg-default)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
           />
         </div>
         {message && status === 'error' && (
-          <p className="text-sm text-red-600">{message}</p>
+          <p className="text-sm text-[var(--danger)]">{message}</p>
         )}
         <button
           type="submit"
           disabled={status === 'loading'}
-          className="w-full rounded bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="w-full rounded bg-[var(--btn-primary)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--btn-primary-hover)] disabled:opacity-50"
         >
           {status === 'loading' ? 'Signing up…' : 'Sign up'}
         </button>
       </form>
 
-      <p className="mt-6 text-xs text-gray-500">
-        Already have an account? <a href="/signin" className="underline">Sign in</a>
+      <p className="mt-6 text-xs text-[var(--fg-muted)]">
+        Already have an account? <a href="/signin" className="text-[var(--accent)] underline hover:no-underline">Sign in</a>
       </p>
-      <p className="mt-2 text-xs text-gray-500">
-        <a href="/" className="underline">
+      <p className="mt-2 text-xs text-[var(--fg-muted)]">
+        <a href="/" className="text-[var(--accent)] underline hover:no-underline">
           Back to home
         </a>
       </p>
@@ -131,7 +131,7 @@ function SignUpForm() {
 
 export default function SignUpPage() {
   return (
-    <Suspense fallback={<main className="mx-auto max-w-md p-6"><p className="text-sm text-gray-500">Loading…</p></main>}>
+    <Suspense fallback={<main className="mx-auto max-w-md p-6"><p className="text-sm text-[var(--fg-muted)]">Loading…</p></main>}>
       <SignUpForm />
     </Suspense>
   );

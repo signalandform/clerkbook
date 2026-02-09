@@ -15,22 +15,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div>
-      <header className="border-b border-gray-200">
+      <header className="border-b border-[var(--border-default)] bg-[var(--bg-default)]">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-6 py-3">
-          <Link href="/library" className="text-sm font-semibold text-gray-900">
+          <Link href="/library" className="text-sm font-semibold text-[var(--fg-default)] hover:text-[var(--accent)]">
             Clerkbook
           </Link>
           <nav className="flex items-center gap-4">
-            <Link href="/library" className="text-sm text-gray-600 hover:text-gray-900">
+            <Link href="/library" className="text-sm text-[var(--fg-muted)] hover:text-[var(--fg-default)]">
               Library
             </Link>
-            <Link href="/new" className="text-sm text-gray-600 hover:text-gray-900">
+            <Link href="/new" className="text-sm text-[var(--fg-muted)] hover:text-[var(--fg-default)]">
               New item
             </Link>
             <button
               type="button"
               onClick={handleSignOut}
-              className="text-sm text-gray-500 hover:text-gray-700"
+              className="text-sm text-[var(--fg-muted)] hover:text-[var(--fg-default)]"
             >
               Sign out
             </button>
