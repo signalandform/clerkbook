@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { AppShell } from '@/app/components/app-shell';
 import { CollectionPicker } from '@/app/components/collection-picker';
 import { CoverageBadge } from '@/app/components/coverage-badge';
@@ -37,6 +37,7 @@ type Item = {
 
 export default function ItemDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const id = params?.id as string;
 
   const [item, setItem] = useState<Item | null>(null);
@@ -245,6 +246,25 @@ export default function ItemDetailPage() {
       await res.json();
       showToast('Re-enrich queued', 'success');
       fetchItem();
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!id || actionLoading) return;
+    if (!confirm('Delete this item? This cannot be undone.')) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/items/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        showToast('Item deleted', 'success');
+        router.push('/library');
+      } else {
+        showToast('Could not delete item', 'error');
+      }
+    } catch {
+      showToast('Could not delete item', 'error');
     } finally {
       setActionLoading(false);
     }
@@ -701,6 +721,17 @@ export default function ItemDetailPage() {
             </div>
           )}
         </section>
+
+        <div className="mt-8 border-t border-[var(--border-default)] pt-6">
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={actionLoading}
+            className="text-sm text-[var(--danger)] hover:underline disabled:opacity-50"
+          >
+            Delete item
+          </button>
+        </div>
 
       </main>
     </AppShell>

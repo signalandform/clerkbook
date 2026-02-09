@@ -96,3 +96,49 @@ export async function PATCH(
 
   return NextResponse.json(item);
 }
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const user = await getUser();
+  if (!user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  const admin = supabaseAdmin();
+  const { data: item, error: fetchError } = await admin
+    .from('items')
+    .select('id, file_path')
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .single();
+
+  if (fetchError || !item) {
+    return NextResponse.json(
+      { error: 'Item not found' },
+      { status: 404 }
+    );
+  }
+
+  if (item.file_path) {
+    await admin.storage.from('library-files').remove([item.file_path]);
+  }
+
+  const { error: deleteError } = await admin
+    .from('items')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id);
+
+  if (deleteError) {
+    return NextResponse.json(
+      { error: 'Could not delete item' },
+      { status: 500 }
+    );
+  }
+
+  return new NextResponse(null, { status: 204 });
+}
