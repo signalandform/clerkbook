@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/app/components/app-shell';
 import { OnboardingBanner } from '@/app/components/onboarding';
@@ -37,6 +37,9 @@ export default function NewItemPage() {
   const [fileTitle, setFileTitle] = useState('');
   const [fileStatus, setFileStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [fileMessage, setFileMessage] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const MAX_FILE_MB = 50;
 
   async function handleUrlSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -96,6 +99,16 @@ export default function NewItemPage() {
       setFileStatus('error');
       return;
     }
+    if (file.size > MAX_FILE_MB * 1024 * 1024) {
+      setFileMessage(`File is too large. Maximum size is ${MAX_FILE_MB}MB.`);
+      setFileStatus('error');
+      return;
+    }
+    if (file.size === 0) {
+      setFileMessage('File is empty.');
+      setFileStatus('error');
+      return;
+    }
     setFileStatus('loading');
     setFileMessage('');
     try {
@@ -109,16 +122,17 @@ export default function NewItemPage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setFileStatus('error');
-        setFileMessage(data.error || 'Failed');
+        setFileMessage(data.error || 'Upload failed. Please try again.');
         return;
       }
       showToast('Job queued', 'success');
       setFile(null);
       setFileTitle('');
+      if (fileInputRef.current) fileInputRef.current.value = '';
       router.push(`/items/${data.itemId}`);
     } catch {
       setFileStatus('error');
-      setFileMessage('Network error');
+      setFileMessage('Network error. Check your connection and try again.');
     }
   }
 
@@ -180,118 +194,134 @@ export default function NewItemPage() {
   return (
     <AppShell>
       <main className="mx-auto max-w-2xl p-6" onKeyDown={handleKeyDown}>
-        <h1 className="text-xl font-semibold text-[var(--fg-default)]">New item</h1>
+        <h1 className="text-2xl font-semibold text-[var(--fg-default)]">New item</h1>
         <p className="mt-2 text-sm text-[var(--fg-muted)]">
-          Save URLs, paste text, or upload documents (PDF, DOCX, TXT, MD). Each item is extracted and enriched automatically.
+          Save URLs, paste text, or upload documents. Each item is extracted and enriched automatically.
         </p>
 
         <div className="mt-4">
           <OnboardingBanner variant="new" />
         </div>
 
-        <form onSubmit={handleQuickSubmit} className="mt-6 flex gap-2">
-          <input
-            type="text"
-            value={quickInput}
-            onChange={(e) => setQuickInput(e.target.value)}
-            placeholder="Paste URL or text…"
-            className="flex-1 rounded-md border border-[var(--border-default)] bg-[var(--control-bg)] px-3 py-2 text-sm text-[var(--fg-default)] placeholder:text-[var(--fg-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-          />
-          <button
-            type="submit"
-            disabled={quickStatus === 'loading' || !quickInput.trim()}
-            className="rounded bg-[var(--btn-primary)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--btn-primary-hover)] disabled:opacity-50"
-          >
-            Capture
-          </button>
-        </form>
-        {quickStatus === 'error' && quickMessage && (
-          <p className="mt-1 text-sm text-[var(--danger)]">{quickMessage}</p>
-        )}
-
-        <section className="mt-8 border-t border-[var(--border-default)] pt-6">
-          <h2 className="text-sm font-medium text-[var(--fg-default)]">Capture URL</h2>
-          <form onSubmit={handleUrlSubmit} className="mt-2 flex gap-2">
-            <input
-              type="url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://..."
-              required
-              className="flex-1 rounded-md border border-[var(--border-default)] bg-[var(--control-bg)] px-3 py-2 text-sm text-[var(--fg-default)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-            />
-            <button
-              type="submit"
-              disabled={urlStatus === 'loading'}
-              className="rounded bg-[var(--btn-primary)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--btn-primary-hover)] disabled:opacity-50"
-            >
-              Capture URL
-            </button>
-          </form>
-          {urlStatus === 'error' && urlMessage && (
-            <p className="mt-1 text-sm text-[var(--danger)]">{urlMessage}</p>
-          )}
-        </section>
-
-        <section className="mt-8 border-t border-[var(--border-default)] pt-6">
-          <h2 className="text-sm font-medium text-[var(--fg-default)]">Capture paste</h2>
-          <form onSubmit={handlePasteSubmit} className="mt-2 space-y-2">
+        <div className="mt-8 rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] p-5">
+          <form onSubmit={handleQuickSubmit} className="flex gap-3">
             <input
               type="text"
-              value={pasteTitle}
-              onChange={(e) => setPasteTitle(e.target.value)}
-              placeholder="Title (optional)"
-              className="w-full rounded-md border border-[var(--border-default)] bg-[var(--control-bg)] px-3 py-2 text-sm text-[var(--fg-default)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-            />
-            <textarea
-              value={pasteText}
-              onChange={(e) => setPasteText(e.target.value)}
-              placeholder="Paste text..."
-              required
-              rows={4}
-              className="w-full rounded-md border border-[var(--border-default)] bg-[var(--control-bg)] px-3 py-2 text-sm text-[var(--fg-default)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+              value={quickInput}
+              onChange={(e) => setQuickInput(e.target.value)}
+              placeholder="Paste URL or text…"
+              className="filter-input flex-1 px-4 py-3 text-base"
             />
             <button
               type="submit"
-              disabled={pasteStatus === 'loading'}
-              className="rounded bg-[var(--btn-primary)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--btn-primary-hover)] disabled:opacity-50"
+              disabled={quickStatus === 'loading' || !quickInput.trim()}
+              className="shrink-0 rounded bg-[var(--btn-primary)] px-5 py-3 text-sm font-medium text-white hover:bg-[var(--btn-primary-hover)] disabled:opacity-50"
             >
-              Capture paste
+              {quickStatus === 'loading' ? 'Capturing…' : 'Capture'}
             </button>
           </form>
-          {pasteStatus === 'error' && pasteMessage && (
-            <p className="mt-1 text-sm text-[var(--danger)]">{pasteMessage}</p>
+          <p className="mt-2 text-xs text-[var(--fg-muted)]">
+            URL or paste — we&apos;ll detect it
+          </p>
+          {quickStatus === 'error' && quickMessage && (
+            <p className="mt-2 text-sm text-[var(--danger)]">{quickMessage}</p>
           )}
-        </section>
+        </div>
 
-        <section className="mt-8 border-t border-[var(--border-default)] pt-6">
-          <h2 className="text-sm font-medium text-[var(--fg-default)]">Capture file</h2>
-          <form onSubmit={handleFileSubmit} className="mt-2 space-y-2">
-            <input
-              type="text"
-              value={fileTitle}
-              onChange={(e) => setFileTitle(e.target.value)}
-              placeholder="Title (optional)"
-              className="w-full rounded-md border border-[var(--border-default)] bg-[var(--control-bg)] px-3 py-2 text-sm text-[var(--fg-default)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-            />
-            <input
-              type="file"
-              accept=".pdf,.docx,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="block w-full text-sm text-[var(--fg-muted)] file:mr-2 file:rounded file:border file:border-[var(--border-default)] file:bg-[var(--draft-muted)] file:px-4 file:py-2 file:text-sm file:font-medium file:text-[var(--fg-default)]"
-            />
-            <button
-              type="submit"
-              disabled={fileStatus === 'loading' || !file}
-              className="rounded bg-[var(--btn-primary)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--btn-primary-hover)] disabled:opacity-50"
-            >
-              Capture file
-            </button>
-          </form>
-          {fileStatus === 'error' && fileMessage && (
-            <p className="mt-1 text-sm text-[var(--danger)]">{fileMessage}</p>
-          )}
-        </section>
+        <h2 className="mt-10 text-sm font-medium text-[var(--fg-muted)]">More options</h2>
+        <div className="mt-3 space-y-4">
+          <section className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-[var(--fg-muted)]">URL</p>
+            <form onSubmit={handleUrlSubmit} className="mt-3 flex gap-2">
+              <input
+                type="url"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://..."
+                required
+                className="filter-input flex-1 px-3 py-2"
+              />
+              <button
+                type="submit"
+                disabled={urlStatus === 'loading'}
+                className="shrink-0 rounded bg-[var(--btn-primary)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--btn-primary-hover)] disabled:opacity-50"
+              >
+                {urlStatus === 'loading' ? 'Capturing…' : 'Capture'}
+              </button>
+            </form>
+            {urlStatus === 'error' && urlMessage && (
+              <p className="mt-2 text-sm text-[var(--danger)]">{urlMessage}</p>
+            )}
+          </section>
+
+          <section className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-[var(--fg-muted)]">Paste</p>
+            <form onSubmit={handlePasteSubmit} className="mt-3 space-y-2">
+              <input
+                type="text"
+                value={pasteTitle}
+                onChange={(e) => setPasteTitle(e.target.value)}
+                placeholder="Title (optional)"
+                className="filter-input w-full px-3 py-2"
+              />
+              <textarea
+                value={pasteText}
+                onChange={(e) => setPasteText(e.target.value)}
+                placeholder="Paste text..."
+                required
+                rows={4}
+                className="filter-input w-full resize-y px-3 py-2"
+              />
+              <button
+                type="submit"
+                disabled={pasteStatus === 'loading'}
+                className="rounded bg-[var(--btn-primary)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--btn-primary-hover)] disabled:opacity-50"
+              >
+                {pasteStatus === 'loading' ? 'Capturing…' : 'Capture paste'}
+              </button>
+            </form>
+            {pasteStatus === 'error' && pasteMessage && (
+              <p className="mt-2 text-sm text-[var(--danger)]">{pasteMessage}</p>
+            )}
+          </section>
+
+          <section className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-[var(--fg-muted)]">File</p>
+            <form onSubmit={handleFileSubmit} className="mt-3 space-y-2">
+              <input
+                type="text"
+                value={fileTitle}
+                onChange={(e) => setFileTitle(e.target.value)}
+                placeholder="Title (optional)"
+                className="filter-input w-full px-3 py-2"
+              />
+              <div className="rounded-md border border-[var(--border-default)] bg-[var(--control-bg)] px-3 py-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.docx,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown"
+                  onChange={(e) => {
+                    setFile(e.target.files?.[0] ?? null);
+                    setFileStatus('idle');
+                    setFileMessage('');
+                  }}
+                  className="block w-full text-sm text-[var(--fg-default)] file:mr-3 file:rounded file:border file:border-[var(--border-default)] file:bg-[var(--draft-muted)] file:px-4 file:py-2 file:text-sm file:font-medium file:text-[var(--fg-default)]"
+                />
+              </div>
+              <p className="text-xs text-[var(--fg-muted)]">PDF, DOCX, TXT, MD — max {MAX_FILE_MB}MB</p>
+              <button
+                type="submit"
+                disabled={fileStatus === 'loading' || !file}
+                className="rounded bg-[var(--btn-primary)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--btn-primary-hover)] disabled:opacity-50"
+              >
+                {fileStatus === 'loading' ? 'Capturing…' : 'Capture file'}
+              </button>
+            </form>
+            {fileStatus === 'error' && fileMessage && (
+              <p className="mt-2 text-sm text-[var(--danger)]">{fileMessage}</p>
+            )}
+          </section>
+        </div>
       </main>
     </AppShell>
   );

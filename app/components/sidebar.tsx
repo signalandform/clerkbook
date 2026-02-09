@@ -96,20 +96,20 @@ export function Sidebar() {
               {c.name}
             </Link>
           ))}
-          <div className="mt-2 flex gap-1 px-1">
+          <div className="mt-2 flex min-w-0 gap-1.5 px-3">
             <input
               type="text"
               placeholder="New collection…"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleCreateCollection()}
-              className="filter-input flex-1 px-2 py-1 text-xs"
+              className="filter-input min-w-0 flex-1 px-2.5 py-1.5 text-xs"
             />
             <button
               type="button"
               onClick={handleCreateCollection}
               disabled={!newName.trim() || creating}
-              className="rounded bg-[var(--btn-primary)] px-2 py-1 text-xs font-medium text-white hover:bg-[var(--btn-primary-hover)] disabled:opacity-50"
+              className="shrink-0 rounded-md bg-[var(--btn-primary)] px-2 py-1.5 text-xs font-medium text-white hover:bg-[var(--btn-primary-hover)] disabled:opacity-50"
             >
               +
             </button>
