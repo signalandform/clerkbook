@@ -10,6 +10,9 @@ type Item = {
   source_type: string;
   status: string;
   created_at: string;
+  abstract?: string | null;
+  summary?: string | null;
+  tags?: string[];
 };
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -83,23 +86,55 @@ export default function LibraryPage() {
 
         {!loading && !error && items.length > 0 && (
           <ul className="mt-6 space-y-3">
-            {items.map((item) => (
-              <li key={item.id}>
-                <Link
-                  href={`/items/${item.id}`}
-                  className="block rounded border border-gray-200 bg-gray-50 p-3 text-sm transition-colors hover:border-gray-300 hover:bg-gray-100"
-                >
-                  <div className="font-medium text-gray-900">
-                    {item.title || item.id.slice(0, 8) + '…'}
-                  </div>
-                  <div className="mt-1 flex gap-2 text-xs text-gray-500">
-                    <span>{item.source_type}</span>
-                    <span>{item.status}</span>
-                    <span>{new Date(item.created_at).toLocaleDateString()}</span>
-                  </div>
-                </Link>
-              </li>
-            ))}
+            {items.map((item) => {
+              const snippet = (item.abstract ?? item.summary ?? '').trim();
+              const snippetDisplay = snippet
+                ? snippet.length > 150
+                  ? snippet.slice(0, 150).trim() + '…'
+                  : snippet
+                : null;
+
+              return (
+                <li key={item.id}>
+                  <Link
+                    href={`/items/${item.id}`}
+                    className="block rounded border border-gray-200 bg-gray-50 p-3 text-sm transition-colors hover:border-gray-300 hover:bg-gray-100"
+                  >
+                    <div className="font-medium text-gray-900">
+                      {item.title || item.id.slice(0, 8) + '…'}
+                    </div>
+                    {snippetDisplay && (
+                      <p className="mt-1 text-gray-600">{snippetDisplay}</p>
+                    )}
+                    {item.status !== 'enriched' && !snippetDisplay && (
+                      <p className="mt-1 text-xs text-gray-400">Processing…</p>
+                    )}
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      {item.tags && item.tags.length > 0 && (
+                        <span className="flex flex-wrap gap-1">
+                          {item.tags.slice(0, 5).map((tag) => (
+                            <span
+                              key={tag}
+                              className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-700"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                          {item.tags.length > 5 && (
+                            <span className="text-xs text-gray-400">+{item.tags.length - 5}</span>
+                          )}
+                        </span>
+                      )}
+                      <span className="flex gap-2 text-xs text-gray-500">
+                        <span>{item.source_type}</span>
+                        <span>{item.status}</span>
+                        <span>{new Date(item.created_at).toLocaleDateString()}</span>
+                      </span>
+                    </div>
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         )}
       </main>
