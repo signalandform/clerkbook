@@ -28,9 +28,10 @@ export async function GET(
     );
   }
 
-  const [{ data: quotes }, { data: tagRows }] = await Promise.all([
+  const [{ data: quotes }, { data: tagRows }, { data: collectionRows }] = await Promise.all([
     admin.from('quotes').select('id, quote, why_it_matters').eq('item_id', id).eq('user_id', user.id),
     admin.from('item_tags').select('tag_id').eq('item_id', id),
+    admin.from('collection_items').select('collection_id').eq('item_id', id),
   ]);
 
   const tagIds = (tagRows ?? []).map((r) => r.tag_id);
@@ -40,9 +41,12 @@ export async function GET(
     tagNames.push(...((tags ?? []).map((t) => t.name) as string[]));
   }
 
+  const collectionIds = (collectionRows ?? []).map((r) => r.collection_id);
+
   return NextResponse.json({
     ...item,
     quotes: quotes ?? [],
     tags: tagNames,
+    collection_ids: collectionIds,
   });
 }

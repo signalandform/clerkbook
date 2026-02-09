@@ -4,7 +4,10 @@ import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { AppShell } from '@/app/components/app-shell';
-import { Toast } from '@/app/components/toast';
+import { CollectionPicker } from '@/app/components/collection-picker';
+import { CoverageBadge } from '@/app/components/coverage-badge';
+import { OnboardingHighlight } from '@/app/components/onboarding';
+import { useToast } from '@/app/contexts/toast';
 
 type Quote = { id: string; quote: string; why_it_matters: string | null };
 type Item = {
@@ -28,6 +31,7 @@ type Item = {
   enriched_at: string | null;
   quotes: Quote[];
   tags: string[];
+  collection_ids?: string[];
 };
 
 export default function ItemDetailPage() {
@@ -38,14 +42,26 @@ export default function ItemDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
+  const { showToast } = useToast();
   const [sourceExpanded, setSourceExpanded] = useState<boolean | null>(null);
   const [highlightPhrase, setHighlightPhrase] = useState<string | null>(null);
   const [quoteNotFound, setQuoteNotFound] = useState<string | null>(null);
   const [tagInput, setTagInput] = useState('');
   const [tagSuggestions, setTagSuggestions] = useState<string[]>([]);
   const [tagDropdownOpen, setTagDropdownOpen] = useState(false);
+  const [collections, setCollections] = useState<{ id: string; name: string }[]>([]);
   const sourceRef = useRef<HTMLDivElement>(null);
+
+  const fetchCollections = useCallback(() => {
+    fetch('/api/collections')
+      .then((r) => r.json())
+      .then((data) => setCollections(data.collections ?? []))
+      .catch(() => setCollections([]));
+  }, []);
+
+  useEffect(() => {
+    fetchCollections();
+  }, [fetchCollections]);
 
   function formatCitation(): string {
     if (!item) return '';
@@ -82,9 +98,9 @@ export default function ItemDetailPage() {
     const final = withCitation ? `${text}\n${formatCitation()}` : text;
     try {
       await navigator.clipboard.writeText(final);
-      setToast(withCitation ? 'Copied with citation' : 'Copied');
+      showToast(withCitation ? 'Copied with citation' : 'Copied', 'success');
     } catch {
-      setToast('Copy failed');
+      showToast('Copy failed', 'error');
     }
   }
 
@@ -134,6 +150,7 @@ export default function ItemDetailPage() {
     try {
       const res = await fetch(`/api/items/${id}/retry`, { method: 'POST' });
       await res.json();
+      showToast('Retry queued', 'success');
       fetchItem();
     } finally {
       setActionLoading(false);
@@ -198,6 +215,7 @@ export default function ItemDetailPage() {
       const url = mode ? `/api/items/${id}/re-enrich?mode=${encodeURIComponent(mode)}` : `/api/items/${id}/re-enrich`;
       const res = await fetch(url, { method: 'POST' });
       await res.json();
+      showToast('Re-enrich queued', 'success');
       fetchItem();
     } finally {
       setActionLoading(false);
@@ -378,6 +396,13 @@ export default function ItemDetailPage() {
           >
             {item.status}
           </span>
+          <CoverageBadge item={item} />
+          <CollectionPicker
+            itemId={item.id}
+            collectionIds={item.collection_ids ?? []}
+            collections={collections}
+            onUpdate={fetchItem}
+          />
           <span className="text-[var(--fg-muted)]">{item.source_type}</span>
           {item.url && (
             <a
@@ -447,6 +472,24 @@ export default function ItemDetailPage() {
           <div className="mt-6 rounded-lg border border-[var(--border-default)] bg-[var(--danger-muted)] p-4 text-sm text-[var(--danger)]">
             <p className="font-medium">Error</p>
             <p className="mt-1">{item.error}</p>
+            {item.source_type === 'url' && (
+              item.error?.includes('403') || item.error?.includes('401') || item.error?.includes('Could not extract text')
+                ? (
+                  <p className="mt-2 text-[var(--fg-default)]">
+                    This may be paywalled or restricted. <Link href="/new" className="text-[var(--accent)] underline hover:no-underline">Try pasting the content</Link> instead.
+                  </p>
+                )
+                : (
+                  <p className="mt-2 text-[var(--fg-default)]">
+                    Try pasting the content manually on <Link href="/new" className="text-[var(--accent)] underline hover:no-underline">New item</Link>, or retry later.
+                  </p>
+                )
+            )}
+            {item.source_type === 'file' && (
+              <p className="mt-2 text-[var(--fg-default)]">
+                Try re-uploading the file or pasting the content on <Link href="/new" className="text-[var(--accent)] underline hover:no-underline">New item</Link>.
+              </p>
+            )}
             <div className="mt-4 flex flex-wrap gap-2">
               {(item.source_type === 'url' || item.source_type === 'file') && (
                 <button
@@ -494,6 +537,10 @@ export default function ItemDetailPage() {
               </button>
             </div>
           </div>
+        )}
+
+        {item.status === 'enriched' && (
+          <OnboardingHighlight />
         )}
 
         {(item.abstract || (item.bullets && item.bullets.length > 0)) ? (
@@ -597,9 +644,6 @@ export default function ItemDetailPage() {
           )}
         </section>
 
-        {toast && (
-          <Toast message={toast} onDismiss={() => setToast(null)} />
-        )}
       </main>
     </AppShell>
   );

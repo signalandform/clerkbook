@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/app/components/app-shell';
+import { OnboardingBanner } from '@/app/components/onboarding';
+import { useToast } from '@/app/contexts/toast';
 
 function isUrl(text: string): boolean {
   const t = text.trim();
@@ -17,6 +19,7 @@ function isUrl(text: string): boolean {
 
 export default function NewItemPage() {
   const router = useRouter();
+  const { showToast } = useToast();
   const [quickInput, setQuickInput] = useState('');
   const [quickStatus, setQuickStatus] = useState<'idle' | 'loading' | 'error'>('idle');
   const [quickMessage, setQuickMessage] = useState('');
@@ -51,6 +54,7 @@ export default function NewItemPage() {
         setUrlMessage(data.error || 'Failed');
         return;
       }
+      showToast('Job queued', 'success');
       setUrl('');
       router.push(`/items/${data.itemId}`);
     } catch {
@@ -75,6 +79,7 @@ export default function NewItemPage() {
         setPasteMessage(data.error || 'Failed');
         return;
       }
+      showToast('Job queued', 'success');
       setPasteTitle('');
       setPasteText('');
       router.push(`/items/${data.itemId}`);
@@ -107,6 +112,7 @@ export default function NewItemPage() {
         setFileMessage(data.error || 'Failed');
         return;
       }
+      showToast('Job queued', 'success');
       setFile(null);
       setFileTitle('');
       router.push(`/items/${data.itemId}`);
@@ -135,6 +141,7 @@ export default function NewItemPage() {
           setQuickMessage(data.error || 'Failed');
           return;
         }
+        showToast('Job queued', 'success');
         setQuickInput('');
         router.push(`/items/${data.itemId}`);
       } else {
@@ -149,6 +156,7 @@ export default function NewItemPage() {
           setQuickMessage(data.error || 'Failed');
           return;
         }
+        showToast('Job queued', 'success');
         setQuickInput('');
         router.push(`/items/${data.itemId}`);
       }
@@ -176,6 +184,10 @@ export default function NewItemPage() {
         <p className="mt-2 text-sm text-[var(--fg-muted)]">
           Save URLs, paste text, or upload documents (PDF, DOCX, TXT, MD). Each item is extracted and enriched automatically.
         </p>
+
+        <div className="mt-4">
+          <OnboardingBanner variant="new" />
+        </div>
 
         <form onSubmit={handleQuickSubmit} className="mt-6 flex gap-2">
           <input

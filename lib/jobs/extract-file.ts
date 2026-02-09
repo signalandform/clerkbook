@@ -2,6 +2,21 @@ import mammoth from 'mammoth';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { enqueueEnrichItem } from './enqueue-enrich';
 
+async function setItemFailed(
+  admin: SupabaseClient,
+  itemId: string,
+  msg: string
+): Promise<void> {
+  await admin
+    .from('items')
+    .update({
+      status: 'failed',
+      error: msg,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', itemId);
+}
+
 async function extractPdf(buffer: Buffer): Promise<string> {
   const { PDFParse } = await import('pdf-parse');
   const parser = new PDFParse({ data: new Uint8Array(buffer) });
@@ -35,7 +50,11 @@ export async function runExtractFile(
     .from('library-files')
     .download(filePath);
 
-  if (downloadErr || !blob) return { error: 'Could not download file' };
+  if (downloadErr || !blob) {
+    const msg = 'Could not download file';
+    await setItemFailed(admin, itemId, msg);
+    return { error: msg };
+  }
 
   const buffer = Buffer.from(await blob.arrayBuffer());
   let cleanedText = '';
@@ -44,8 +63,10 @@ export async function runExtractFile(
   if (mt === 'application/pdf') {
     try {
       cleanedText = await extractPdf(buffer);
-    } catch (e) {
-      return { error: 'Could not parse PDF' };
+    } catch {
+      const msg = 'Could not parse PDF';
+      await setItemFailed(admin, itemId, msg);
+      return { error: msg };
     }
   } else if (
     mt === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
@@ -54,12 +75,16 @@ export async function runExtractFile(
       const result = await mammoth.extractRawText({ buffer });
       cleanedText = result.value.trim();
     } catch {
-      return { error: 'Could not parse DOCX' };
+      const msg = 'Could not parse DOCX';
+      await setItemFailed(admin, itemId, msg);
+      return { error: msg };
     }
   } else if (mt === 'text/plain' || mt === 'text/markdown') {
     cleanedText = buffer.toString('utf-8').trim();
   } else {
-    return { error: 'Unsupported file type' };
+    const msg = 'Unsupported file type';
+    await setItemFailed(admin, itemId, msg);
+    return { error: msg };
   }
 
   const now = new Date().toISOString();
@@ -73,7 +98,11 @@ export async function runExtractFile(
     })
     .eq('id', itemId);
 
-  if (updateErr) return { error: 'Could not update item' };
+  if (updateErr) {
+    const msg = 'Could not update item';
+    await setItemFailed(admin, itemId, msg);
+    return { error: msg };
+  }
 
   await enqueueEnrichItem(admin, item.user_id, itemId);
 

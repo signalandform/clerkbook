@@ -14,6 +14,7 @@ export async function GET(request: Request) {
   const sourceType = url.searchParams.get('source_type')?.trim();
   const domain = url.searchParams.get('domain')?.trim();
   const tag = url.searchParams.get('tag')?.trim();
+  const collection = url.searchParams.get('collection')?.trim();
 
   if (!q) {
     return NextResponse.json({ items: [] }, { status: 200 });
@@ -25,7 +26,7 @@ export async function GET(request: Request) {
   const admin = supabaseAdmin();
   let query = admin
     .from('items')
-    .select('id, title, source_type, domain, summary, abstract, status, created_at')
+    .select('id, title, source_type, domain, summary, abstract, status, created_at, bullets, cleaned_text_length')
     .eq('user_id', user.id)
     .or(`title.ilike.${pattern},summary.ilike.${pattern},abstract.ilike.${pattern}`)
     .order('created_at', { ascending: false })
@@ -57,6 +58,25 @@ export async function GET(request: Request) {
 
   let list = items ?? [];
 
+  if (collection && list.length > 0) {
+    const { data: coll } = await admin
+      .from('collections')
+      .select('id')
+      .eq('id', collection)
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (coll?.id) {
+      const { data: ci } = await admin
+        .from('collection_items')
+        .select('item_id')
+        .eq('collection_id', collection);
+      const inCollection = new Set((ci ?? []).map((r) => r.item_id));
+      list = list.filter((i) => inCollection.has(i.id));
+    } else {
+      list = [];
+    }
+  }
+
   if (tag && list.length > 0) {
     const itemIds = list.map((i) => i.id);
     const { data: tagRow } = await admin
@@ -83,10 +103,29 @@ export async function GET(request: Request) {
   }
 
   const itemIds = list.map((i) => i.id);
-  const { data: itemTagRows } = await admin
-    .from('item_tags')
-    .select('item_id, tag_id')
+  const { data: quoteCounts } = await admin
+    .from('quotes')
+    .select('item_id')
+    .eq('user_id', user.id)
     .in('item_id', itemIds);
+
+  const quotesByItem = new Map<string, number>();
+  for (const row of quoteCounts ?? []) {
+    const count = quotesByItem.get(row.item_id) ?? 0;
+    quotesByItem.set(row.item_id, count + 1);
+  }
+
+  const [{ data: itemTagRows }, { data: collectionItemRows }] = await Promise.all([
+    admin.from('item_tags').select('item_id, tag_id').in('item_id', itemIds),
+    admin.from('collection_items').select('item_id, collection_id').in('item_id', itemIds),
+  ]);
+
+  const collectionIdsByItem = new Map<string, string[]>();
+  for (const row of collectionItemRows ?? []) {
+    const arr = collectionIdsByItem.get(row.item_id) ?? [];
+    arr.push(row.collection_id);
+    collectionIdsByItem.set(row.item_id, arr);
+  }
 
   const tagIds = [...new Set((itemTagRows ?? []).map((r) => r.tag_id))];
   const tagMap = new Map<string, string[]>();
@@ -111,6 +150,8 @@ export async function GET(request: Request) {
   const itemsWithTags = list.map((item) => ({
     ...item,
     tags: tagMap.get(item.id) ?? [],
+    quotes_count: quotesByItem.get(item.id) ?? 0,
+    collection_ids: collectionIdsByItem.get(item.id) ?? [],
   }));
 
   return NextResponse.json({ items: itemsWithTags });

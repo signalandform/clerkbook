@@ -5,6 +5,21 @@ import { enqueueEnrichItem } from './enqueue-enrich';
 
 const FETCH_TIMEOUT_MS = 15000;
 
+async function setItemFailed(
+  admin: SupabaseClient,
+  itemId: string,
+  msg: string
+): Promise<void> {
+  await admin
+    .from('items')
+    .update({
+      status: 'failed',
+      error: msg,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', itemId);
+}
+
 export async function runExtractUrl(
   admin: SupabaseClient,
   jobId: string,
@@ -35,6 +50,7 @@ export async function runExtractUrl(
     html = await res.text();
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Fetch failed';
+    await setItemFailed(admin, itemId, msg);
     return { error: msg };
   }
 
@@ -55,7 +71,9 @@ export async function runExtractUrl(
       cleanedText = body.slice(0, 100_000);
     }
   } catch {
-    return { error: 'Could not extract text from URL' };
+    const msg = 'Could not extract text from URL';
+    await setItemFailed(admin, itemId, msg);
+    return { error: msg };
   }
 
   const now = new Date().toISOString();
@@ -79,7 +97,11 @@ export async function runExtractUrl(
     })
     .eq('id', itemId);
 
-  if (updateErr) return { error: 'Could not update item' };
+  if (updateErr) {
+    const msg = 'Could not update item';
+    await setItemFailed(admin, itemId, msg);
+    return { error: msg };
+  }
 
   await enqueueEnrichItem(admin, item.user_id, itemId);
 
