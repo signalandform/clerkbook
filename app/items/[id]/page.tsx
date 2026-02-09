@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { AppShell } from '@/app/components/app-shell';
 import { Toast } from '@/app/components/toast';
@@ -39,6 +39,13 @@ export default function ItemDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [sourceExpanded, setSourceExpanded] = useState<boolean | null>(null);
+  const [highlightPhrase, setHighlightPhrase] = useState<string | null>(null);
+  const [quoteNotFound, setQuoteNotFound] = useState<string | null>(null);
+  const [tagInput, setTagInput] = useState('');
+  const [tagSuggestions, setTagSuggestions] = useState<string[]>([]);
+  const [tagDropdownOpen, setTagDropdownOpen] = useState(false);
+  const sourceRef = useRef<HTMLDivElement>(null);
 
   function formatCitation(): string {
     if (!item) return '';
@@ -50,6 +57,25 @@ export default function ItemDetailPage() {
       return `(Source: ${item.original_filename})`;
     }
     return '(Source: note)';
+  }
+
+  function handleQuoteClick(quote: string) {
+    const unquoted = quote.replace(/^["']|["']$/g, '').trim();
+    const content = item?.cleaned_text || '';
+    setQuoteNotFound(null);
+    setHighlightPhrase(null);
+    if (!content) {
+      setQuoteNotFound(unquoted);
+      return;
+    }
+    const idx = content.indexOf(unquoted);
+    if (idx === -1) {
+      setQuoteNotFound(unquoted);
+      return;
+    }
+    setSourceExpanded(true);
+    setHighlightPhrase(unquoted);
+    setTimeout(() => sourceRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
   }
 
   async function copyWithFeedback(text: string, withCitation: boolean) {
@@ -114,11 +140,63 @@ export default function ItemDetailPage() {
     }
   }
 
-  async function handleReEnrich() {
+  async function handleAddTag(tag: string) {
+    const name = tag.trim().toLowerCase().slice(0, 100);
+    if (!name || !id) return;
+    try {
+      const res = await fetch(`/api/items/${id}/tags`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tag: name }),
+      });
+      if (res.ok) {
+        setTagInput('');
+        setTagDropdownOpen(false);
+        fetchItem();
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  async function handleRemoveTag(tag: string, e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!id) return;
+    try {
+      const res = await fetch(`/api/items/${id}/tags?tag=${encodeURIComponent(tag)}`, { method: 'DELETE' });
+      if (res.ok) fetchItem();
+    } catch {
+      // ignore
+    }
+  }
+
+  useEffect(() => {
+    if (!tagInput.trim()) {
+      setTagSuggestions([]);
+      setTagDropdownOpen(false);
+      return;
+    }
+    const q = tagInput.trim().toLowerCase();
+    fetch('/api/tags')
+      .then((r) => r.json())
+      .then((data: { tags?: string[] }) => {
+        const currentTags = new Set(item?.tags ?? []);
+        const suggestions = (data.tags ?? [])
+          .filter((t) => t.toLowerCase().includes(q) && !currentTags.has(t))
+          .slice(0, 8);
+        setTagSuggestions(suggestions);
+        setTagDropdownOpen(suggestions.length > 0 || q.length > 0);
+      })
+      .catch(() => setTagSuggestions([]));
+  }, [tagInput, item?.tags]);
+
+  async function handleReEnrich(mode?: string) {
     if (!id || actionLoading) return;
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/items/${id}/re-enrich`, { method: 'POST' });
+      const url = mode ? `/api/items/${id}/re-enrich?mode=${encodeURIComponent(mode)}` : `/api/items/${id}/re-enrich`;
+      const res = await fetch(url, { method: 'POST' });
       await res.json();
       fetchItem();
     } finally {
@@ -154,6 +232,24 @@ export default function ItemDetailPage() {
   if (!item) return null;
 
   const content = item.cleaned_text || item.raw_text;
+  const defaultCollapsed = (content?.length ?? 0) > 2000;
+  const isExpanded = sourceExpanded ?? !defaultCollapsed;
+
+  function renderSourceWithHighlight(text: string): React.ReactNode {
+    if (!text || !highlightPhrase) return text;
+    const idx = text.indexOf(highlightPhrase);
+    if (idx === -1) return text;
+    const before = text.slice(0, idx);
+    const match = text.slice(idx, idx + highlightPhrase.length);
+    const after = text.slice(idx + highlightPhrase.length);
+    return (
+      <>
+        {before}
+        <mark className="rounded bg-[#fff8c5] dark:bg-yellow-900/40">{match}</mark>
+        {after}
+      </>
+    );
+  }
 
   return (
     <AppShell>
@@ -198,6 +294,75 @@ export default function ItemDetailPage() {
         <h1 className="text-xl font-semibold text-[var(--fg-default)]">
           {item.title || item.original_filename || item.domain || item.id.slice(0, 8) + '…'}
         </h1>
+
+        {/* Tags under title */}
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          {item.tags?.map((tag) => (
+            <span
+              key={tag}
+              className="inline-flex items-center gap-1 rounded-md bg-[var(--draft-muted)] pl-2 pr-1 py-0.5 text-xs text-[var(--fg-muted)]"
+            >
+              <Link
+                href={`/library?tag=${encodeURIComponent(tag)}`}
+                className="text-[var(--accent)] hover:underline"
+              >
+                {tag}
+              </Link>
+              <button
+                type="button"
+                onClick={(e) => handleRemoveTag(tag, e)}
+                className="rounded p-0.5 hover:bg-[var(--bg-inset)]"
+                aria-label={`Remove ${tag}`}
+              >
+                ×
+              </button>
+            </span>
+          ))}
+          <div className="relative">
+            <input
+              type="text"
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onFocus={() => tagInput.trim() && setTagDropdownOpen(true)}
+              onBlur={() => setTimeout(() => setTagDropdownOpen(false), 150)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  const val = tagInput.trim();
+                  if (val) handleAddTag(val);
+                }
+              }}
+              placeholder="Add tag…"
+              className="w-28 rounded-md border border-[var(--border-default)] bg-[var(--bg-default)] px-2 py-0.5 text-xs text-[var(--fg-default)] placeholder:text-[var(--fg-muted)]"
+            />
+            {tagDropdownOpen && (
+              <ul className="absolute left-0 top-full z-10 mt-1 max-h-40 w-48 overflow-auto rounded-md border border-[var(--border-default)] bg-[var(--bg-default)] py-1 shadow-lg">
+                {tagSuggestions.map((s) => (
+                  <li key={s}>
+                    <button
+                      type="button"
+                      className="w-full px-2 py-1 text-left text-xs text-[var(--fg-default)] hover:bg-[var(--bg-inset)]"
+                      onMouseDown={(e) => { e.preventDefault(); handleAddTag(s); }}
+                    >
+                      {s}
+                    </button>
+                  </li>
+                ))}
+                {tagInput.trim() && !item?.tags?.includes(tagInput.trim().toLowerCase()) && (
+                  <li>
+                    <button
+                      type="button"
+                      className="w-full px-2 py-1 text-left text-xs text-[var(--accent)] hover:bg-[var(--bg-inset)]"
+                      onMouseDown={(e) => { e.preventDefault(); handleAddTag(tagInput.trim()); }}
+                    >
+                      Add &ldquo;{tagInput.trim()}&rdquo;
+                    </button>
+                  </li>
+                )}
+              </ul>
+            )}
+          </div>
+        </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
           <span
@@ -246,6 +411,38 @@ export default function ItemDetailPage() {
           </ul>
         </div>
 
+        {item.status === 'enriched' && (
+          <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--fg-muted)]">
+            Regenerate:{' '}
+            <button
+              type="button"
+              onClick={() => handleReEnrich('concise')}
+              disabled={actionLoading}
+              className="text-[var(--accent)] hover:underline disabled:opacity-50"
+            >
+              Re-enrich (concise)
+            </button>
+            <button
+              type="button"
+              onClick={() => handleReEnrich('analytical')}
+              disabled={actionLoading}
+              className="text-[var(--accent)] hover:underline disabled:opacity-50"
+            >
+              Re-enrich (analytical)
+            </button>
+            {(item.source_type === 'url' || item.source_type === 'file') && (
+              <button
+                type="button"
+                onClick={handleRetry}
+                disabled={actionLoading}
+                className="text-[var(--accent)] hover:underline disabled:opacity-50"
+              >
+                Re-extract
+              </button>
+            )}
+          </p>
+        )}
+
         {item.status === 'failed' && item.error && (
           <div className="mt-6 rounded-lg border border-[var(--border-default)] bg-[var(--danger-muted)] p-4 text-sm text-[var(--danger)]">
             <p className="font-medium">Error</p>
@@ -273,7 +470,23 @@ export default function ItemDetailPage() {
               )}
               <button
                 type="button"
-                onClick={handleReEnrich}
+                onClick={() => handleReEnrich('concise')}
+                disabled={actionLoading}
+                className="rounded border border-[var(--border-default)] bg-[var(--bg-default)] px-3 py-1.5 text-xs font-medium text-[var(--fg-default)] hover:bg-[var(--bg-inset)] disabled:opacity-50"
+              >
+                Re-enrich (concise)
+              </button>
+              <button
+                type="button"
+                onClick={() => handleReEnrich('analytical')}
+                disabled={actionLoading}
+                className="rounded border border-[var(--border-default)] bg-[var(--bg-default)] px-3 py-1.5 text-xs font-medium text-[var(--fg-default)] hover:bg-[var(--bg-inset)] disabled:opacity-50"
+              >
+                Re-enrich (analytical)
+              </button>
+              <button
+                type="button"
+                onClick={() => handleReEnrich()}
                 disabled={actionLoading}
                 className="rounded border border-[var(--border-default)] bg-[var(--bg-default)] px-3 py-1.5 text-xs font-medium text-[var(--fg-default)] hover:bg-[var(--bg-inset)] disabled:opacity-50"
               >
@@ -329,7 +542,15 @@ export default function ItemDetailPage() {
               {item.quotes.map((q) => (
                 <li key={q.id} className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] p-3 text-sm">
                   <div className="flex items-start justify-between gap-2">
-                    <blockquote className="flex-1 text-[var(--fg-default)]">&ldquo;{q.quote}&rdquo;</blockquote>
+                    <blockquote
+                      className="flex-1 cursor-pointer text-[var(--fg-default)] hover:underline"
+                      onClick={() => handleQuoteClick(q.quote)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleQuoteClick(q.quote)}
+                      role="button"
+                      tabIndex={0}
+                    >
+                      &ldquo;{q.quote}&rdquo;
+                    </blockquote>
                     <span className="flex shrink-0 gap-1">
                       <button
                         type="button"
@@ -350,33 +571,30 @@ export default function ItemDetailPage() {
                   {q.why_it_matters && (
                     <p className="mt-1 text-[var(--fg-muted)]">{q.why_it_matters}</p>
                   )}
+                  {quoteNotFound === q.quote && (
+                    <p className="mt-1 text-xs text-[var(--fg-muted)]">Could not locate quote in text</p>
+                  )}
                 </li>
               ))}
             </ul>
           </section>
         )}
 
-        {item.tags && item.tags.length > 0 && (
-          <section className="mt-6">
-            <h2 className="text-sm font-medium text-[var(--fg-default)]">Tags</h2>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {item.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-md bg-[var(--draft-muted)] px-2 py-0.5 text-xs text-[var(--fg-muted)]"
-                >
-                  {tag}
-                </span>
-              ))}
+        <section className="mt-6" ref={sourceRef}>
+          <button
+            type="button"
+            onClick={() => setSourceExpanded(!isExpanded)}
+            aria-expanded={isExpanded}
+            className="flex w-full items-center justify-between rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] px-4 py-2 text-left text-sm font-medium text-[var(--fg-default)]"
+          >
+            <span>Source text</span>
+            <span>{isExpanded ? '−' : '+'}</span>
+          </button>
+          {isExpanded && (
+            <div className="mt-2 max-h-96 overflow-auto rounded-lg border border-t-0 border-[var(--border-default)] bg-[var(--bg-inset)] p-4 text-sm text-[var(--fg-default)] whitespace-pre-wrap">
+              {content ? renderSourceWithHighlight(content) : 'No content yet. Item may still be processing.'}
             </div>
-          </section>
-        )}
-
-        <section className="mt-6">
-          <h2 className="text-sm font-medium text-[var(--fg-default)]">Content</h2>
-          <div className="mt-2 max-h-96 overflow-auto rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] p-4 text-sm text-[var(--fg-default)] whitespace-pre-wrap">
-            {content ? content : 'No content yet. Item may still be processing.'}
-          </div>
+          )}
         </section>
 
         {toast && (

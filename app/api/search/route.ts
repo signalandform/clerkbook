@@ -10,6 +10,11 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url);
   const q = url.searchParams.get('q')?.trim() ?? '';
+  const status = url.searchParams.get('status')?.trim();
+  const sourceType = url.searchParams.get('source_type')?.trim();
+  const domain = url.searchParams.get('domain')?.trim();
+  const tag = url.searchParams.get('tag')?.trim();
+
   if (!q) {
     return NextResponse.json({ items: [] }, { status: 200 });
   }
@@ -18,19 +23,61 @@ export async function GET(request: Request) {
   const pattern = `"%${escaped}%"`;
 
   const admin = supabaseAdmin();
-  const { data: items, error } = await admin
+  let query = admin
     .from('items')
-    .select('id, title, source_type, summary, abstract, status, created_at')
+    .select('id, title, source_type, domain, summary, abstract, status, created_at')
     .eq('user_id', user.id)
     .or(`title.ilike.${pattern},summary.ilike.${pattern},abstract.ilike.${pattern}`)
     .order('created_at', { ascending: false })
     .limit(50);
 
+  if (status && status !== 'all') {
+    if (status === 'processing') {
+      query = query.in('status', ['captured', 'extracted']);
+    } else if (status === 'failed') {
+      query = query.eq('status', 'failed');
+    } else if (status === 'enriched') {
+      query = query.eq('status', 'enriched');
+    }
+  }
+
+  if (sourceType) {
+    query = query.eq('source_type', sourceType);
+  }
+
+  if (domain) {
+    query = query.ilike('domain', `%${domain}%`);
+  }
+
+  const { data: items, error } = await query;
+
   if (error) {
     return NextResponse.json({ error: 'Could not search' }, { status: 500 });
   }
 
-  const list = items ?? [];
+  let list = items ?? [];
+
+  if (tag && list.length > 0) {
+    const itemIds = list.map((i) => i.id);
+    const { data: tagRow } = await admin
+      .from('tags')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('name', tag)
+      .maybeSingle();
+    if (tagRow?.id) {
+      const { data: itemTagRows } = await admin
+        .from('item_tags')
+        .select('item_id')
+        .eq('tag_id', tagRow.id)
+        .in('item_id', itemIds);
+      const taggedIds = new Set((itemTagRows ?? []).map((r) => r.item_id));
+      list = list.filter((i) => taggedIds.has(i.id));
+    } else {
+      list = [];
+    }
+  }
+
   if (list.length === 0) {
     return NextResponse.json({ items: [] });
   }

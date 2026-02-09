@@ -4,7 +4,8 @@ export async function enqueueEnrichItem(
   admin: SupabaseClient,
   userId: string,
   itemId: string,
-  force?: boolean
+  force?: boolean,
+  mode?: string
 ): Promise<{ jobId?: string; skipped?: boolean }> {
   if (!force) {
     const { data: existing } = await admin
@@ -27,7 +28,7 @@ export async function enqueueEnrichItem(
       user_id: userId,
       item_id: itemId,
       type: 'enrich_item',
-      payload: { itemId },
+      payload: { itemId, mode: mode || undefined },
       status: 'queued',
     })
     .select('id')

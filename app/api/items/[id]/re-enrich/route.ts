@@ -4,7 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { enqueueEnrichItem } from '@/lib/jobs/enqueue-enrich';
 
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const user = await getUser();
@@ -13,6 +13,8 @@ export async function POST(
   }
 
   const { id: itemId } = await params;
+  const { searchParams } = new URL(request.url);
+  const mode = searchParams.get('mode'); // concise | analytical | null
 
   const admin = supabaseAdmin();
   const { data: item, error: itemErr } = await admin
@@ -28,6 +30,6 @@ export async function POST(
 
   await admin.from('items').update({ error: null }).eq('id', itemId);
 
-  const { jobId } = await enqueueEnrichItem(admin, user.id, itemId, true);
+  const { jobId } = await enqueueEnrichItem(admin, user.id, itemId, true, mode || undefined);
   return NextResponse.json({ message: 'Re-enrich enqueued', jobId }, { status: 200 });
 }

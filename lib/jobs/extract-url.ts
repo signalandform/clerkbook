@@ -59,6 +59,14 @@ export async function runExtractUrl(
   }
 
   const now = new Date().toISOString();
+  let domain: string | null = null;
+  try {
+    const u = new URL(url);
+    domain = u.hostname.replace(/^www\./, '') || null;
+  } catch {
+    // ignore
+  }
+
   const { error: updateErr } = await admin
     .from('items')
     .update({
@@ -67,6 +75,7 @@ export async function runExtractUrl(
       status: 'extracted',
       extracted_at: now,
       updated_at: now,
+      ...(domain && { domain }),
     })
     .eq('id', itemId);
 

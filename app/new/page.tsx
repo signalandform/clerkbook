@@ -4,8 +4,23 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/app/components/app-shell';
 
+function isUrl(text: string): boolean {
+  const t = text.trim();
+  if (!t) return false;
+  try {
+    new URL(t);
+    return /^https?:\/\//i.test(t);
+  } catch {
+    return false;
+  }
+}
+
 export default function NewItemPage() {
   const router = useRouter();
+  const [quickInput, setQuickInput] = useState('');
+  const [quickStatus, setQuickStatus] = useState<'idle' | 'loading' | 'error'>('idle');
+  const [quickMessage, setQuickMessage] = useState('');
+
   const [url, setUrl] = useState('');
   const [urlStatus, setUrlStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [urlMessage, setUrlMessage] = useState('');
@@ -101,6 +116,48 @@ export default function NewItemPage() {
     }
   }
 
+  async function handleQuickSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const text = quickInput.trim();
+    if (!text) return;
+    setQuickStatus('loading');
+    setQuickMessage('');
+    try {
+      if (isUrl(text)) {
+        const res = await fetch('/api/capture/url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: text }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setQuickStatus('error');
+          setQuickMessage(data.error || 'Failed');
+          return;
+        }
+        setQuickInput('');
+        router.push(`/items/${data.itemId}`);
+      } else {
+        const res = await fetch('/api/capture/paste', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setQuickStatus('error');
+          setQuickMessage(data.error || 'Failed');
+          return;
+        }
+        setQuickInput('');
+        router.push(`/items/${data.itemId}`);
+      }
+    } catch {
+      setQuickStatus('error');
+      setQuickMessage('Network error');
+    }
+  }
+
   function handleKeyDown(e: React.KeyboardEvent) {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       const target = e.target as HTMLElement;
@@ -119,6 +176,26 @@ export default function NewItemPage() {
         <p className="mt-2 text-sm text-[var(--fg-muted)]">
           Save URLs, paste text, or upload documents (PDF, DOCX, TXT, MD). Each item is extracted and enriched automatically.
         </p>
+
+        <form onSubmit={handleQuickSubmit} className="mt-6 flex gap-2">
+          <input
+            type="text"
+            value={quickInput}
+            onChange={(e) => setQuickInput(e.target.value)}
+            placeholder="Paste URL or text…"
+            className="flex-1 rounded-md border border-[var(--border-default)] bg-[var(--control-bg)] px-3 py-2 text-sm text-[var(--fg-default)] placeholder:text-[var(--fg-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+          />
+          <button
+            type="submit"
+            disabled={quickStatus === 'loading' || !quickInput.trim()}
+            className="rounded bg-[var(--btn-primary)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--btn-primary-hover)] disabled:opacity-50"
+          >
+            Capture
+          </button>
+        </form>
+        {quickStatus === 'error' && quickMessage && (
+          <p className="mt-1 text-sm text-[var(--danger)]">{quickMessage}</p>
+        )}
 
         <section className="mt-8 border-t border-[var(--border-default)] pt-6">
           <h2 className="text-sm font-medium text-[var(--fg-default)]">Capture URL</h2>

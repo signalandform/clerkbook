@@ -66,7 +66,7 @@ async function runJobs(request: Request) {
           mimeType: string;
         });
       } else if (job.type === 'enrich_item') {
-        result = await runEnrichItem(admin, job.id, payload as { itemId: string });
+        result = await runEnrichItem(admin, job.id, payload as { itemId: string; mode?: string });
       } else {
         result = { error: 'Unknown job type' };
       }

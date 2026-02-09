@@ -60,12 +60,17 @@ async function setItemFailed(
     .eq('id', itemId);
 }
 
+const MODE_SUFFIXES: Record<string, string> = {
+  concise: 'Be brief and punchy; fewer bullets and quotes.',
+  analytical: 'Emphasize analysis, implications, and critical evaluation.',
+};
+
 export async function runEnrichItem(
   admin: SupabaseClient,
   jobId: string,
-  payload: { itemId: string }
+  payload: { itemId: string; mode?: string }
 ): Promise<{ error?: string; truncated?: boolean }> {
-  const { itemId } = payload;
+  const { itemId, mode } = payload;
   if (!itemId) return { error: 'Missing itemId' };
 
   const { data: item, error: itemErr } = await admin
@@ -93,13 +98,16 @@ export async function runEnrichItem(
   const truncated = text.slice(0, 120_000);
   let enriched: Enriched | null = null;
 
+  const modeSuffix = mode && MODE_SUFFIXES[mode] ? ` ${MODE_SUFFIXES[mode]}` : '';
+  const userPrompt = `Extract abstract, bullets, quotes, tags, and optional title from this text:${modeSuffix}\n\n${truncated}`;
+
   try {
     const openai = getOpenAI();
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: ENRICH_SYSTEM },
-        { role: 'user', content: `Extract abstract, bullets, quotes, tags, and optional title from this text:\n\n${truncated}` },
+        { role: 'user', content: userPrompt },
       ],
       response_format: { type: 'json_object' },
     });
