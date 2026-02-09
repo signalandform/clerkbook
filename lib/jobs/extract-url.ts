@@ -1,5 +1,5 @@
 import { Readability } from '@mozilla/readability';
-import { JSDOM } from 'jsdom';
+import { parseHTML } from 'linkedom';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { enqueueEnrichItem } from './enqueue-enrich';
 
@@ -40,12 +40,18 @@ export async function runExtractUrl(
 
   let cleanedText = '';
   try {
-    const dom = new JSDOM(html, { url });
-    const reader = new Readability(dom.window.document);
+    const { document } = parseHTML(html);
+
+    // Set base URI for Readability (resolves relative links)
+    const base = document.createElement('base');
+    base.href = url;
+    document.head?.appendChild(base);
+
+    const reader = new Readability(document);
     const article = reader.parse();
     cleanedText = article?.textContent?.trim() ?? '';
     if (!cleanedText) {
-      const body = dom.window.document.body?.textContent?.trim() ?? '';
+      const body = document.body?.textContent?.trim() ?? '';
       cleanedText = body.slice(0, 100_000);
     }
   } catch {
