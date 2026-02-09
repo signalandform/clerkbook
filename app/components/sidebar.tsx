@@ -96,27 +96,27 @@ export function Sidebar() {
               {c.name}
             </Link>
           ))}
+          <div className="mt-2 flex gap-1 px-1">
+            <input
+              type="text"
+              placeholder="New collection…"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleCreateCollection()}
+              className="filter-input flex-1 px-2 py-1 text-xs"
+            />
+            <button
+              type="button"
+              onClick={handleCreateCollection}
+              disabled={!newName.trim() || creating}
+              className="rounded bg-[var(--btn-primary)] px-2 py-1 text-xs font-medium text-white hover:bg-[var(--btn-primary-hover)] disabled:opacity-50"
+            >
+              +
+            </button>
+          </div>
         </div>
       </div>
       <div className="mt-auto border-t border-[var(--border-default)] p-3">
-        <div className="mb-3 flex gap-1">
-          <input
-            type="text"
-            placeholder="New collection…"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleCreateCollection()}
-            className="filter-input flex-1 px-2 py-1 text-xs"
-          />
-          <button
-            type="button"
-            onClick={handleCreateCollection}
-            disabled={!newName.trim() || creating}
-            className="rounded bg-[var(--btn-primary)] px-2 py-1 text-xs font-medium text-white hover:bg-[var(--btn-primary-hover)] disabled:opacity-50"
-          >
-            +
-          </button>
-        </div>
         <button
           type="button"
           onClick={handleSignOut}
