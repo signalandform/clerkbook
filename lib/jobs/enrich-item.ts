@@ -1,5 +1,7 @@
 import OpenAI from 'openai';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { INSUFFICIENT_TEXT_MESSAGE } from '@/lib/constants';
+import { extractContacts } from '@/lib/contacts';
 
 function getOpenAI() {
   const key = process.env.OPENAI_API_KEY;
@@ -65,6 +67,107 @@ const MODE_SUFFIXES: Record<string, string> = {
   analytical: 'Emphasize analysis, implications, and critical evaluation.',
 };
 
+const TAG_ONLY_SYSTEM =
+  'Generate 5-15 topic tags (lowercase, short, no spaces) from the given text. Respond with valid JSON only: { "tags": ["tag1", "tag2", ...] }';
+
+function parseTagsResponse(content: string): string[] {
+  const trimmed = content.trim();
+  const jsonMatch = trimmed.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) return [];
+  try {
+    const parsed = JSON.parse(jsonMatch[0]) as { tags?: unknown };
+    if (!Array.isArray(parsed.tags)) return [];
+    return parsed.tags
+      .filter((t): t is string => typeof t === 'string')
+      .map((t) => t.trim().toLowerCase().slice(0, 100))
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+async function runShortTextEnrich(
+  admin: SupabaseClient,
+  itemId: string,
+  item: { user_id: string },
+  text: string
+): Promise<{ error?: string }> {
+  const userId = item.user_id;
+  let tagNames: string[] = [];
+
+  try {
+    const openai = getOpenAI();
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: TAG_ONLY_SYSTEM },
+        { role: 'user', content: `Generate tags from this text:\n\n${text}` },
+      ],
+      response_format: { type: 'json_object' },
+    });
+    const content = completion.choices[0]?.message?.content;
+    if (content) tagNames = parseTagsResponse(content);
+  } catch {
+    // Non-fatal: still mark item as enriched with notice; tags may be empty
+  }
+
+  const abstractFallback =
+    text.length > 200 ? `${text.slice(0, 197).trim()}...` : text || 'Insufficient text for summary';
+  const summaryText = text || abstractFallback;
+  const now = new Date().toISOString();
+  const contacts = extractContacts(text);
+
+  const { error: updateItemErr } = await admin
+    .from('items')
+    .update({
+      abstract: abstractFallback,
+      bullets: [],
+      summary: summaryText,
+      status: 'enriched',
+      error: INSUFFICIENT_TEXT_MESSAGE,
+      enriched_at: now,
+      updated_at: now,
+      contacts: contacts as unknown as Record<string, unknown>,
+    })
+    .eq('id', itemId);
+
+  if (updateItemErr) {
+    const msg = 'Could not update item';
+    await setItemFailed(admin, itemId, msg);
+    return { error: msg };
+  }
+
+  await admin.from('quotes').delete().eq('item_id', itemId);
+
+  await admin.from('item_tags').delete().eq('item_id', itemId);
+  for (const name of tagNames) {
+    const tagName = String(name).trim().toLowerCase().slice(0, 100);
+    if (!tagName) continue;
+    const { data: existing } = await admin
+      .from('tags')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('name', tagName)
+      .single();
+
+    let tagId: string;
+    if (existing?.id) {
+      tagId = existing.id;
+    } else {
+      const { data: inserted, error: insErr } = await admin
+        .from('tags')
+        .insert({ user_id: userId, name: tagName })
+        .select('id')
+        .single();
+      if (insErr || !inserted) continue;
+      tagId = inserted.id;
+    }
+    await admin.from('item_tags').insert({ item_id: itemId, tag_id: tagId });
+  }
+
+  return {};
+}
+
 export async function runEnrichItem(
   admin: SupabaseClient,
   jobId: string,
@@ -89,9 +192,7 @@ export async function runEnrichItem(
   }
 
   if (text.length < 500) {
-    const msg = 'Not enough extracted text to summarize';
-    await setItemFailed(admin, itemId, msg);
-    return { error: msg };
+    return runShortTextEnrich(admin, itemId, item, text);
   }
 
   const wasTruncated = text.length > 120_000;
@@ -144,6 +245,8 @@ export async function runEnrichItem(
   const summaryCompat = `${abstract}\n\n- ${bullets.join('\n- ')}`;
 
   const now = new Date().toISOString();
+  const contacts = extractContacts(text);
+
   const updates: Record<string, unknown> = {
     abstract,
     bullets,
@@ -152,6 +255,7 @@ export async function runEnrichItem(
     error: null,
     enriched_at: now,
     updated_at: now,
+    contacts: contacts as unknown as Record<string, unknown>,
   };
   if (!item.title && enrichedTitle) updates.title = enrichedTitle;
 

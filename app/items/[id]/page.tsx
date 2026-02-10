@@ -9,8 +9,15 @@ import { CoverageBadge } from '@/app/components/coverage-badge';
 import { OnboardingHighlight } from '@/app/components/onboarding';
 import { useToast } from '@/app/contexts/toast';
 import { getItemDisplayTitle } from '@/lib/item-display';
+import { INSUFFICIENT_TEXT_MESSAGE } from '@/lib/constants';
 
 type Quote = { id: string; quote: string; why_it_matters: string | null };
+type ItemContacts = {
+  emails?: string[];
+  phones?: string[];
+  addresses?: string[];
+  usernames?: { username: string; platform: string }[];
+};
 type Item = {
   id: string;
   title: string | null;
@@ -35,6 +42,7 @@ type Item = {
   collection_ids?: string[];
   thumbnail_url?: string | null;
   image_urls?: string[] | null;
+  contacts?: ItemContacts | null;
 };
 
 export default function ItemDetailPage() {
@@ -413,6 +421,75 @@ export default function ItemDetailPage() {
           </section>
         )}
 
+        {item.contacts &&
+          ((item.contacts.emails?.length ?? 0) > 0 ||
+            (item.contacts.phones?.length ?? 0) > 0 ||
+            (item.contacts.addresses?.length ?? 0) > 0 ||
+            (item.contacts.usernames?.length ?? 0) > 0) && (
+          <section className="mb-4">
+            <h2 className="text-sm font-medium text-[var(--fg-default)]">Contact information</h2>
+            <div className="mt-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] p-4 text-sm text-[var(--fg-default)]">
+              {item.contacts.emails && item.contacts.emails.length > 0 && (
+                <div className="mb-3">
+                  <p className="text-xs font-medium text-[var(--fg-muted)]">Email</p>
+                  <ul className="mt-1 space-y-0.5">
+                    {item.contacts.emails.map((email, i) => (
+                      <li key={i}>
+                        <a
+                          href={`mailto:${email}`}
+                          className="text-[var(--accent)] underline hover:no-underline"
+                        >
+                          {email}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {item.contacts.phones && item.contacts.phones.length > 0 && (
+                <div className="mb-3">
+                  <p className="text-xs font-medium text-[var(--fg-muted)]">Phone</p>
+                  <ul className="mt-1 space-y-0.5">
+                    {item.contacts.phones.map((phone, i) => (
+                      <li key={i}>
+                        <a
+                          href={`tel:${phone.replace(/\D/g, '')}`}
+                          className="text-[var(--accent)] underline hover:no-underline"
+                        >
+                          {phone}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {item.contacts.addresses && item.contacts.addresses.length > 0 && (
+                <div className="mb-3">
+                  <p className="text-xs font-medium text-[var(--fg-muted)]">Address</p>
+                  <ul className="mt-1 space-y-0.5">
+                    {item.contacts.addresses.map((addr, i) => (
+                      <li key={i}>{addr}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {item.contacts.usernames && item.contacts.usernames.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-[var(--fg-muted)]">Usernames</p>
+                  <ul className="mt-1 space-y-0.5">
+                    {item.contacts.usernames.map((u, i) => (
+                      <li key={i}>
+                        <span className="text-[var(--fg-muted)]">{u.platform}:</span>{' '}
+                        {u.username}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
         <div className="flex items-center gap-2">
           {editingTitle ? (
             <input
@@ -670,6 +747,13 @@ export default function ItemDetailPage() {
                 Re-enrich
               </button>
             </div>
+          </div>
+        )}
+
+        {item.status === 'enriched' && item.error === INSUFFICIENT_TEXT_MESSAGE && (
+          <div className="mt-6 rounded-lg border border-[var(--border-default)] bg-[var(--accent-muted)] p-4 text-sm text-[var(--fg-default)]">
+            <p className="font-medium">Notice</p>
+            <p className="mt-1">{INSUFFICIENT_TEXT_MESSAGE}</p>
           </div>
         )}
 
