@@ -10,7 +10,7 @@
 By accessing or using the Service, you agree to these Terms. If you do not agree, do not use the Service.
 
 ## 2) Eligibility
-You must be at least **13 years old** (or the minimum age required in your jurisdiction) to use the Service.
+You must be at least **13 years old** (or the minimum age required in your jurisdiction) to use the Service. We primarily expect users to be college students and older.
 
 ## 3) Accounts
 - You are responsible for your account and maintaining the confidentiality of login credentials.

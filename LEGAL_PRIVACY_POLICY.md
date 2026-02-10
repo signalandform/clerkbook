@@ -86,7 +86,7 @@ Depending on your location, you may have rights to:
 You can delete items/files within the Service. You may request account deletion by contacting us.
 
 ## 9) Children’s privacy
-CiteStack is not intended for children under **13** (or the minimum age required in your jurisdiction). If you believe a child has provided personal information, contact us.
+CiteStack is not intended for children under **13** (or the minimum age required in your jurisdiction). We primarily expect users to be college students and older. If you believe a child has provided personal information, contact us.
 
 ## 10) International transfers
 If you access the Service from outside the United States, your information may be processed in the United States or other locations where our providers operate.
