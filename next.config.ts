@@ -5,6 +5,11 @@ const nextConfig: NextConfig = {
     // Prevent Next from inferring the OpenClaw workspace root (multiple lockfiles)
     root: __dirname,
   },
+  async redirects() {
+    return [
+      { source: '/srtudents', destination: '/students', permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;
