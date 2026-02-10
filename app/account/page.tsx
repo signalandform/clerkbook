@@ -160,14 +160,14 @@ export default function AccountPage() {
               )}
 
               <div className="mt-6 flex flex-wrap gap-2">
-                <button
-                  type="button"
+                <Link
+                  href="/account/coming-soon"
                   className="rounded-md border border-[var(--border-default)] bg-[var(--bg-default)] px-3 py-2 text-sm font-medium text-[var(--fg-default)] hover:bg-[var(--draft-muted)]"
                 >
                   Upgrade plan
-                </button>
+                </Link>
                 <Link
-                  href="/account/billing"
+                  href="/account/coming-soon"
                   className="rounded-md border border-[var(--border-default)] bg-[var(--bg-default)] px-3 py-2 text-sm font-medium text-[var(--fg-default)] hover:bg-[var(--draft-muted)]"
                 >
                   Buy credit pack
