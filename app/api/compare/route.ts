@@ -3,6 +3,27 @@ import { getUser } from '@/lib/supabase/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { runCompareItems, type CompareResult } from '@/lib/jobs/compare-items';
 
+export async function GET() {
+  const user = await getUser();
+  if (!user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const admin = supabaseAdmin();
+  const { data: comparisons, error } = await admin
+    .from('comparisons')
+    .select('id, item_ids, created_at')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(100);
+
+  if (error) {
+    return NextResponse.json({ error: 'Could not load comparisons' }, { status: 500 });
+  }
+
+  return NextResponse.json({ comparisons: comparisons ?? [] });
+}
+
 export async function POST(request: Request) {
   const user = await getUser();
   if (!user?.id) {

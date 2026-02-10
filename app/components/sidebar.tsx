@@ -55,6 +55,9 @@ export function Sidebar() {
         <Link href="/queue" className={navLinkClass(pathname === '/queue')}>
           Process queue
         </Link>
+        <Link href="/compare" className={navLinkClass(pathname === '/compare' || pathname.startsWith('/compare/'))}>
+          Comparisons
+        </Link>
       </nav>
       <div className="border-t border-[var(--border-default)] px-3 py-2">
         <p className="mb-2 px-3 text-xs font-medium text-[var(--fg-muted)]">Collections</p>
