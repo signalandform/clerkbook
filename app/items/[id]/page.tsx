@@ -477,18 +477,18 @@ export default function ItemDetailPage() {
         )}
 
         {false && item?.contacts &&
-          ((item.contacts.emails?.length ?? 0) > 0 ||
-            (item.contacts.phones?.length ?? 0) > 0 ||
-            (item.contacts.addresses?.length ?? 0) > 0 ||
-            (item.contacts.usernames?.length ?? 0) > 0) && (
+          ((item?.contacts?.emails?.length ?? 0) > 0 ||
+            (item?.contacts?.phones?.length ?? 0) > 0 ||
+            (item?.contacts?.addresses?.length ?? 0) > 0 ||
+            (item?.contacts?.usernames?.length ?? 0) > 0) && (
           <section className="mb-4">
             <h2 className="text-sm font-medium text-[var(--fg-default)]">Contact information</h2>
             <div className="mt-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] p-4 text-sm text-[var(--fg-default)]">
-              {item.contacts.emails && item.contacts.emails.length > 0 && (
+              {item?.contacts?.emails && (item?.contacts?.emails?.length ?? 0) > 0 && (
                 <div className="mb-3">
                   <p className="text-xs font-medium text-[var(--fg-muted)]">Email</p>
                   <ul className="mt-1 space-y-0.5">
-                    {item.contacts.emails.map((email, i) => (
+                    {item?.contacts?.emails?.map((email, i) => (
                       <li key={i}>
                         <a
                           href={`mailto:${email}`}
@@ -501,11 +501,11 @@ export default function ItemDetailPage() {
                   </ul>
                 </div>
               )}
-              {item.contacts.phones && item.contacts.phones.length > 0 && (
+              {item?.contacts?.phones && (item?.contacts?.phones?.length ?? 0) > 0 && (
                 <div className="mb-3">
                   <p className="text-xs font-medium text-[var(--fg-muted)]">Phone</p>
                   <ul className="mt-1 space-y-0.5">
-                    {item.contacts.phones.map((phone, i) => (
+                    {item?.contacts?.phones?.map((phone, i) => (
                       <li key={i}>
                         <a
                           href={`tel:${phone.replace(/\D/g, '')}`}
@@ -518,21 +518,21 @@ export default function ItemDetailPage() {
                   </ul>
                 </div>
               )}
-              {item.contacts.addresses && item.contacts.addresses.length > 0 && (
+              {item?.contacts?.addresses && (item?.contacts?.addresses?.length ?? 0) > 0 && (
                 <div className="mb-3">
                   <p className="text-xs font-medium text-[var(--fg-muted)]">Address</p>
                   <ul className="mt-1 space-y-0.5">
-                    {item.contacts.addresses.map((addr, i) => (
+                    {item?.contacts?.addresses?.map((addr, i) => (
                       <li key={i}>{addr}</li>
                     ))}
                   </ul>
                 </div>
               )}
-              {item.contacts.usernames && item.contacts.usernames.length > 0 && (
+              {item?.contacts?.usernames && (item?.contacts?.usernames?.length ?? 0) > 0 && (
                 <div>
                   <p className="text-xs font-medium text-[var(--fg-muted)]">Usernames</p>
                   <ul className="mt-1 space-y-0.5">
-                    {item.contacts.usernames.map((u, i) => (
+                    {item?.contacts?.usernames?.map((u, i) => (
                       <li key={i}>
                         <span className="text-[var(--fg-muted)]">{u.platform}:</span>{' '}
                         {u.username}
