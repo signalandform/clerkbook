@@ -64,7 +64,63 @@ function LibraryContent() {
   const [collectionFilter, setCollectionFilter] = useState(collectionFromUrl ?? '');
   const [newCollectionName, setNewCollectionName] = useState('');
   const [creatingCollection, setCreatingCollection] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const { showToast } = useToast();
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.size === items.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(items.map((i) => i.id)));
+    }
+  }
+
+  async function handleExport(format: 'bibtex' | 'ris' | 'csl-json') {
+    setExportDropdownOpen(false);
+    if (selectedIds.size === 0) return;
+    setExporting(true);
+    const accessedAt = new Date().toISOString().slice(0, 10);
+    try {
+      const res = await fetch('/api/citations/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          format,
+          itemIds: Array.from(selectedIds),
+          accessedAt,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Export failed');
+      }
+      const blob = await res.blob();
+      const ext = format === 'bibtex' ? '.bib' : format === 'ris' ? '.ris' : '.json';
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `citestack-export${ext}`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Export downloaded', 'success');
+      setSelectedIds(new Set());
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Export failed', 'error');
+    } finally {
+      setExporting(false);
+    }
+  }
   const debouncedQuery = useDebounce(searchQuery.trim(), 300);
   const debouncedDomain = useDebounce(domainFilter.trim(), 300);
 
@@ -300,6 +356,73 @@ function LibraryContent() {
           </div>
         </div>
 
+        {!loading && !error && items.length > 0 && (
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleSelectAll}
+              className="text-sm text-[var(--accent)] hover:underline"
+            >
+              {selectedIds.size === items.length ? 'Clear selection' : 'Select all'}
+            </button>
+            {selectedIds.size > 0 && (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setExportDropdownOpen((v) => !v)}
+                  disabled={exporting}
+                  className="filter-select inline-flex items-center gap-1 px-2 py-1.5 text-sm"
+                  aria-haspopup="listbox"
+                  aria-expanded={exportDropdownOpen}
+                >
+                  Export ({selectedIds.size})…
+                </button>
+                {exportDropdownOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-10"
+                      aria-hidden="true"
+                      onClick={() => setExportDropdownOpen(false)}
+                    />
+                    <ul
+                      className="absolute left-0 top-full z-20 mt-1 min-w-[140px] rounded-md border border-[var(--border-default)] bg-[var(--bg-default)] py-1 shadow-lg"
+                      role="listbox"
+                    >
+                      <li>
+                        <button
+                          type="button"
+                          onClick={() => handleExport('bibtex')}
+                          className="w-full px-3 py-1.5 text-left text-sm text-[var(--fg-default)] hover:bg-[var(--bg-inset)]"
+                        >
+                          BibTeX (.bib)
+                        </button>
+                      </li>
+                      <li>
+                        <button
+                          type="button"
+                          onClick={() => handleExport('ris')}
+                          className="w-full px-3 py-1.5 text-left text-sm text-[var(--fg-default)] hover:bg-[var(--bg-inset)]"
+                        >
+                          RIS (.ris)
+                        </button>
+                      </li>
+                      <li>
+                        <button
+                          type="button"
+                          onClick={() => handleExport('csl-json')}
+                          className="w-full px-3 py-1.5 text-left text-sm text-[var(--fg-default)] hover:bg-[var(--bg-inset)]"
+                        >
+                          CSL-JSON (.json)
+                        </button>
+                      </li>
+                    </ul>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {collections.length === 0 && !loading && (
           <p className="mt-2 text-xs text-[var(--fg-muted)]">
             Create a collection above to group items into lightweight projects.
@@ -341,9 +464,24 @@ function LibraryContent() {
                 : null;
               const isInFavorites = Boolean(favoritesCollectionId && item.collection_ids?.includes(favoritesCollectionId));
 
+              const isSelected = selectedIds.has(item.id);
               return (
                 <li key={item.id}>
-                  <div className="relative rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] transition-colors hover:border-[var(--border-default)] hover:bg-[var(--draft-muted)]">
+                  <div className="relative flex rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] transition-colors hover:border-[var(--border-default)] hover:bg-[var(--draft-muted)]">
+                    <div
+                      className="flex shrink-0 items-start pt-3 pl-3"
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleSelect(item.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        aria-label={`Select ${getItemDisplayTitle(item)}`}
+                        className="h-4 w-4 rounded border-[var(--border-default)] text-[var(--accent)] focus:ring-[var(--accent)]"
+                      />
+                    </div>
                     {favoritesCollectionId && (
                       <button
                         type="button"
@@ -369,7 +507,7 @@ function LibraryContent() {
                     )}
                     <Link
                       href={`/items/${item.id}`}
-                      className="block p-3 pr-10 text-sm"
+                      className="min-w-0 flex-1 block p-3 pr-10 text-sm"
                     >
                       <div className="font-medium text-[var(--fg-default)]">
                         {getItemDisplayTitle(item)}

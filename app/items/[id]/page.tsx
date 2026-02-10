@@ -43,7 +43,16 @@ type Item = {
   thumbnail_url?: string | null;
   image_urls?: string[] | null;
   contacts?: ItemContacts | null;
+  authors?: string[] | null;
+  publisher?: string | null;
+  published_at?: string | null;
+  accessed_at?: string | null;
+  doi?: string | null;
 };
+
+function todayISO(): string {
+  return new Date().toISOString().slice(0, 10);
+}
 
 export default function ItemDetailPage() {
   const params = useParams();
@@ -65,6 +74,9 @@ export default function ItemDetailPage() {
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleEditValue, setTitleEditValue] = useState('');
   const [screenshotFullscreen, setScreenshotFullscreen] = useState(false);
+  const [citationAccessedOn, setCitationAccessedOn] = useState(() => todayISO());
+  const [citations, setCitations] = useState<{ apa: string; mla: string; chicago: string } | null>(null);
+  const [citationsLoading, setCitationsLoading] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const sourceRef = useRef<HTMLDivElement>(null);
 
@@ -78,6 +90,23 @@ export default function ItemDetailPage() {
   useEffect(() => {
     fetchCollections();
   }, [fetchCollections]);
+
+  useEffect(() => {
+    if (!id || !item) {
+      setCitations(null);
+      return;
+    }
+    setCitationsLoading(true);
+    fetch('/api/citations/formatted', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ itemId: id, accessedAt: citationAccessedOn }),
+    })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('Failed to load citations'))))
+      .then((data) => setCitations({ apa: data.apa, mla: data.mla, chicago: data.chicago }))
+      .catch(() => setCitations(null))
+      .finally(() => setCitationsLoading(false));
+  }, [id, item, citationAccessedOn]);
 
   function startEditTitle() {
     setTitleEditValue(getItemDisplayTitle(item!));
@@ -646,6 +675,86 @@ export default function ItemDetailPage() {
             )}
           </ul>
         </div>
+
+        {/* Cite panel */}
+        <section className="mt-6">
+          <h2 className="text-sm font-medium text-[var(--fg-default)]">Cite</h2>
+          <div className="mt-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] p-4">
+            <label className="block text-xs font-medium text-[var(--fg-muted)]">
+              Accessed on
+            </label>
+            <input
+              type="date"
+              value={citationAccessedOn}
+              onChange={(e) => setCitationAccessedOn(e.target.value.slice(0, 10))}
+              className="filter-input mt-1 px-2 py-1.5"
+            />
+            {citationsLoading && (
+              <p className="mt-3 text-xs text-[var(--fg-muted)]">Loading citations…</p>
+            )}
+            {!citationsLoading && citations && (
+              <div className="mt-4 space-y-4">
+                <div>
+                  <p className="text-xs font-medium text-[var(--fg-muted)]">APA 7</p>
+                  <p className="mt-1 text-sm text-[var(--fg-default)]">{citations.apa}</p>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(citations!.apa);
+                        showToast('Copied', 'success');
+                      } catch {
+                        showToast('Copy failed', 'error');
+                      }
+                    }}
+                    className="mt-1 rounded border border-[var(--border-default)] bg-[var(--bg-default)] px-2 py-0.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--bg-inset)]"
+                  >
+                    Copy citation
+                  </button>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-[var(--fg-muted)]">MLA 9</p>
+                  <p className="mt-1 text-sm text-[var(--fg-default)]">{citations.mla}</p>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(citations!.mla);
+                        showToast('Copied', 'success');
+                      } catch {
+                        showToast('Copy failed', 'error');
+                      }
+                    }}
+                    className="mt-1 rounded border border-[var(--border-default)] bg-[var(--bg-default)] px-2 py-0.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--bg-inset)]"
+                  >
+                    Copy citation
+                  </button>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-[var(--fg-muted)]">Chicago (Notes/Bibliography)</p>
+                  <p className="mt-1 text-sm text-[var(--fg-default)]">{citations.chicago}</p>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(citations!.chicago);
+                        showToast('Copied', 'success');
+                      } catch {
+                        showToast('Copy failed', 'error');
+                      }
+                    }}
+                    className="mt-1 rounded border border-[var(--border-default)] bg-[var(--bg-default)] px-2 py-0.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--bg-inset)]"
+                  >
+                    Copy citation
+                  </button>
+                </div>
+              </div>
+            )}
+            {!citationsLoading && !citations && (
+              <p className="mt-3 text-xs text-[var(--fg-muted)]">Could not load citations.</p>
+            )}
+          </div>
+        </section>
 
         {item.status === 'enriched' && (
           <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--fg-muted)]">
