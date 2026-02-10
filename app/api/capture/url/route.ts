@@ -100,8 +100,10 @@ export async function POST(request: Request) {
     .single();
 
   if (itemError || !item) {
+    const message = itemError?.message ?? 'Unknown error';
+    console.error('[capture/url] items insert failed', { itemError, userId: user.id });
     return NextResponse.json(
-      { error: 'Could not create item' },
+      { error: 'Could not create item', details: message },
       { status: 500 }
     );
   }
@@ -115,8 +117,10 @@ export async function POST(request: Request) {
   });
 
   if (jobError) {
+    const message = jobError?.message ?? 'Unknown error';
+    console.error('[capture/url] jobs insert failed', { jobError, itemId: item.id });
     return NextResponse.json(
-      { error: 'Could not enqueue job' },
+      { error: 'Could not enqueue job', details: message },
       { status: 500 }
     );
   }

@@ -38,8 +38,10 @@ export async function POST(request: Request) {
     .single();
 
   if (itemError || !item) {
+    const message = itemError?.message ?? 'Unknown error';
+    console.error('[capture/paste] items insert failed', { itemError, userId: user.id });
     return NextResponse.json(
-      { error: 'Could not create item' },
+      { error: 'Could not create item', details: message },
       { status: 500 }
     );
   }
@@ -62,9 +64,11 @@ export async function POST(request: Request) {
       { itemId: item.id, jobId },
       { status: 201 }
     );
-  } catch {
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    console.error('[capture/paste] enqueue failed', { err, itemId: item.id });
     return NextResponse.json(
-      { error: 'Could not enqueue job' },
+      { error: 'Could not enqueue job', details: message },
       { status: 500 }
     );
   }

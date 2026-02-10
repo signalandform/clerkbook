@@ -194,8 +194,10 @@ export async function POST(request: Request) {
           return NextResponse.json(responseBody, { status: 200 });
         }
       }
+      const message = itemError?.message ?? 'Unknown error';
+      console.error('[capture/file] items insert failed', { itemError, userId: user.id });
       return NextResponse.json(
-        { error: 'Could not create item. Please try again.' },
+        { error: 'Could not create item', details: message },
         { status: 500 }
       );
     }
@@ -241,8 +243,10 @@ export async function POST(request: Request) {
     });
 
     if (jobError) {
+      const message = jobError?.message ?? 'Unknown error';
+      console.error('[capture/file] jobs insert failed', { jobError, itemId: item.id });
       return NextResponse.json(
-        { error: 'File uploaded but processing could not start. Check the item in your library.' },
+        { error: 'Could not enqueue job', details: message },
         { status: 500 }
       );
     }
@@ -272,8 +276,10 @@ export async function POST(request: Request) {
     }
     return NextResponse.json(responseBody, { status: 201 });
   } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    console.error('[capture/file] unexpected error', { err });
     return NextResponse.json(
-      { error: 'An unexpected error occurred. Please try again.' },
+      { error: 'An unexpected error occurred', details: message },
       { status: 500 }
     );
   }

@@ -40,7 +40,7 @@ export default function NewItemPage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setUrlStatus('error');
-        setUrlMessage(data.error || 'Failed');
+        setUrlMessage(data.details ?? data.error ?? 'Failed');
         return;
       }
       setUrl('');
@@ -76,7 +76,7 @@ export default function NewItemPage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setPasteStatus('error');
-        setPasteMessage(data.error || 'Failed');
+        setPasteMessage(data.details ?? data.error ?? 'Failed');
         return;
       }
       showToast('Saved to CiteStack', 'success', {
@@ -122,7 +122,7 @@ export default function NewItemPage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setFileStatus('error');
-        setFileMessage(data.error || 'Upload failed. Please try again.');
+        setFileMessage(data.details ?? data.error ?? 'Upload failed. Please try again.');
         return;
       }
       showToast('Saved to CiteStack', 'success', {
