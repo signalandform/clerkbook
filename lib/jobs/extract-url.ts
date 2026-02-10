@@ -56,6 +56,7 @@ export async function runExtractUrl(
 
   let cleanedText = '';
   let extractedTitle: string | null = null;
+  let imageUrls: string[] = [];
   try {
     const { document } = parseHTML(html);
 
@@ -71,6 +72,23 @@ export async function runExtractUrl(
     if (!cleanedText) {
       const body = document.body?.textContent?.trim() ?? '';
       cleanedText = body.slice(0, 100_000);
+    }
+
+    const imgs = document.querySelectorAll('img');
+    const seen = new Set<string>();
+    for (const img of imgs) {
+      const src = img.getAttribute('src')?.trim();
+      if (!src || src.startsWith('data:')) continue;
+      try {
+        const absolute = new URL(src, url).href;
+        if (!absolute.startsWith('http:') && !absolute.startsWith('https:')) continue;
+        if (seen.has(absolute)) continue;
+        seen.add(absolute);
+        imageUrls.push(absolute);
+        if (imageUrls.length >= 50) break;
+      } catch {
+        // skip invalid URLs
+      }
     }
   } catch {
     const msg = 'Could not extract text from URL';
@@ -97,6 +115,7 @@ export async function runExtractUrl(
       updated_at: now,
       ...(domain && { domain }),
       ...(extractedTitle && { title: extractedTitle.slice(0, 500) }),
+      image_urls: imageUrls,
     })
     .eq('id', itemId);
 
