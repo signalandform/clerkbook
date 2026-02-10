@@ -62,12 +62,10 @@ export default function QueuePage() {
     fetchJobs();
   }, [fetchJobs]);
 
-  const hasActiveJobs = jobs.some((j) => j.status === 'queued' || j.status === 'running');
   useEffect(() => {
-    if (!hasActiveJobs) return;
     const interval = setInterval(fetchJobs, 3000);
     return () => clearInterval(interval);
-  }, [hasActiveJobs, fetchJobs]);
+  }, [fetchJobs]);
 
   return (
     <AppShell>
