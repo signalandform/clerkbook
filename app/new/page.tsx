@@ -48,7 +48,7 @@ export default function NewItemPage() {
         linkLabel: 'Open item',
       });
       setUrl('');
-      router.push(`/items/${data.itemId}`);
+      router.push('/queue');
     } catch {
       setUrlStatus('error');
       setUrlMessage('Network error');
@@ -77,7 +77,7 @@ export default function NewItemPage() {
       });
       setPasteTitle('');
       setPasteText('');
-      router.push(`/items/${data.itemId}`);
+      router.push('/queue');
     } catch {
       setPasteStatus('error');
       setPasteMessage('Network error');
@@ -124,7 +124,7 @@ export default function NewItemPage() {
       setFile(null);
       setFileTitle('');
       if (fileInputRef.current) fileInputRef.current.value = '';
-      router.push(`/items/${data.itemId}`);
+      router.push('/queue');
     } catch {
       setFileStatus('error');
       setFileMessage('Network error. Check your connection and try again.');

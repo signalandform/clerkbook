@@ -476,7 +476,7 @@ export default function ItemDetailPage() {
           </section>
         )}
 
-        {item.contacts &&
+        {false && item.contacts &&
           ((item.contacts.emails?.length ?? 0) > 0 ||
             (item.contacts.phones?.length ?? 0) > 0 ||
             (item.contacts.addresses?.length ?? 0) > 0 ||
@@ -922,9 +922,9 @@ export default function ItemDetailPage() {
                           type="button"
                           onClick={() => copyWithFeedback(b, false)}
                           className="inline-flex items-center gap-1 rounded border border-[var(--border-default)] bg-[var(--bg-default)] px-2 py-0.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--bg-inset)]"
+                          title="Copy"
                         >
                           <CopyIcon className="h-3.5 w-3.5 shrink-0" />
-                          Copy
                         </button>
                         <button
                           type="button"
@@ -969,9 +969,9 @@ export default function ItemDetailPage() {
                         type="button"
                         onClick={() => copyWithFeedback(`"${q.quote}"`, false)}
                         className="inline-flex items-center gap-1 rounded border border-[var(--border-default)] bg-[var(--bg-default)] px-2 py-0.5 text-xs text-[var(--fg-muted)] hover:bg-[var(--bg-inset)]"
+                        title="Copy"
                       >
                         <CopyIcon className="h-3.5 w-3.5 shrink-0" />
-                        Copy
                       </button>
                       <button
                         type="button"
