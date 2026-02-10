@@ -5,6 +5,7 @@ import { ToastProvider } from "@/app/contexts/toast";
 export const metadata: Metadata = {
   title: "Citestack",
   description: "Citation-first research library (save → summarize → search → cite)",
+  icons: { icon: "/favicon.png" },
 };
 
 export default function RootLayout({

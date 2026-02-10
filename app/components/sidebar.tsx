@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -43,8 +44,9 @@ export function Sidebar() {
   return (
     <aside className="flex w-[200px] shrink-0 flex-col border-r border-[var(--border-default)] bg-[var(--bg-inset)]">
       <nav className="flex flex-col gap-0.5 p-3">
-        <Link href="/library" className="font-semibold text-[var(--fg-default)] hover:text-[var(--accent)] px-3 py-2">
-          Citestack
+        <Link href="/library" className="flex items-center gap-2 px-3 py-2 text-[var(--fg-default)] hover:opacity-80">
+          <Image src="/logo.png" alt="Citestack" width={28} height={28} className="shrink-0" />
+          <span className="font-semibold">Citestack</span>
         </Link>
         <Link href="/library" className={navLinkClass(pathname === '/library')}>
           Library
