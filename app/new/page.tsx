@@ -6,23 +6,9 @@ import { AppShell } from '@/app/components/app-shell';
 import { OnboardingBanner } from '@/app/components/onboarding';
 import { useToast } from '@/app/contexts/toast';
 
-function isUrl(text: string): boolean {
-  const t = text.trim();
-  if (!t) return false;
-  try {
-    new URL(t);
-    return /^https?:\/\//i.test(t);
-  } catch {
-    return false;
-  }
-}
-
 export default function NewItemPage() {
   const router = useRouter();
   const { showToast } = useToast();
-  const [quickInput, setQuickInput] = useState('');
-  const [quickStatus, setQuickStatus] = useState<'idle' | 'loading' | 'error'>('idle');
-  const [quickMessage, setQuickMessage] = useState('');
 
   const [url, setUrl] = useState('');
   const [urlStatus, setUrlStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -145,56 +131,6 @@ export default function NewItemPage() {
     }
   }
 
-  async function handleQuickSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const text = quickInput.trim();
-    if (!text) return;
-    setQuickStatus('loading');
-    setQuickMessage('');
-    try {
-      if (isUrl(text)) {
-        const res = await fetch('/api/capture/url', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: text }),
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          setQuickStatus('error');
-          setQuickMessage(data.error || 'Failed');
-          return;
-        }
-        showToast('Saved to CiteStack', 'success', {
-          linkUrl: `/items/${data.itemId}`,
-          linkLabel: 'Open item',
-        });
-        setQuickInput('');
-        router.push(`/items/${data.itemId}`);
-      } else {
-        const res = await fetch('/api/capture/paste', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text }),
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          setQuickStatus('error');
-          setQuickMessage(data.error || 'Failed');
-          return;
-        }
-        showToast('Saved to CiteStack', 'success', {
-          linkUrl: `/items/${data.itemId}`,
-          linkLabel: 'Open item',
-        });
-        setQuickInput('');
-        router.push(`/items/${data.itemId}`);
-      }
-    } catch {
-      setQuickStatus('error');
-      setQuickMessage('Network error');
-    }
-  }
-
   function handleKeyDown(e: React.KeyboardEvent) {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       const target = e.target as HTMLElement;
@@ -218,35 +154,10 @@ export default function NewItemPage() {
           <OnboardingBanner variant="new" />
         </div>
 
-        <div className="mt-8 rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] p-5">
-          <form onSubmit={handleQuickSubmit} className="flex gap-3">
-            <input
-              type="text"
-              value={quickInput}
-              onChange={(e) => setQuickInput(e.target.value)}
-              placeholder="Paste URL or text…"
-              className="filter-input flex-1 px-4 py-3 text-base"
-            />
-            <button
-              type="submit"
-              disabled={quickStatus === 'loading' || !quickInput.trim()}
-              className="shrink-0 rounded bg-[var(--btn-primary)] px-5 py-3 text-sm font-medium text-white hover:bg-[var(--btn-primary-hover)] disabled:opacity-50"
-            >
-              {quickStatus === 'loading' ? 'Capturing…' : 'Capture'}
-            </button>
-          </form>
-          <p className="mt-2 text-xs text-[var(--fg-muted)]">
-            URL or paste — we&apos;ll detect it
-          </p>
-          {quickStatus === 'error' && quickMessage && (
-            <p className="mt-2 text-sm text-[var(--danger)]">{quickMessage}</p>
-          )}
-        </div>
-
-        <h2 className="mt-10 text-sm font-medium text-[var(--fg-muted)]">More options</h2>
-        <div className="mt-3 space-y-4">
+        <div className="mt-8 space-y-6">
           <section className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-[var(--fg-muted)]">URL</p>
+            <h2 className="text-base font-medium text-[var(--fg-default)]">URL</h2>
+            <p className="mt-1 text-xs text-[var(--fg-muted)]">Save a web page by its link.</p>
             <form onSubmit={handleUrlSubmit} className="mt-3 flex gap-2">
               <input
                 type="url"
@@ -270,7 +181,8 @@ export default function NewItemPage() {
           </section>
 
           <section className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-[var(--fg-muted)]">Paste</p>
+            <h2 className="text-base font-medium text-[var(--fg-default)]">Paste</h2>
+            <p className="mt-1 text-xs text-[var(--fg-muted)]">Paste text or an article to capture.</p>
             <form onSubmit={handlePasteSubmit} className="mt-3 space-y-2">
               <input
                 type="text"
@@ -301,7 +213,8 @@ export default function NewItemPage() {
           </section>
 
           <section className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-[var(--fg-muted)]">File</p>
+            <h2 className="text-base font-medium text-[var(--fg-default)]">File upload</h2>
+            <p className="mt-1 text-xs text-[var(--fg-muted)]">Upload a document (PDF, DOCX, TXT, MD).</p>
             <form onSubmit={handleFileSubmit} className="mt-3 space-y-2">
               <input
                 type="text"
