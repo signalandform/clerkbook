@@ -55,6 +55,7 @@ export default function ItemDetailPage() {
   const [collections, setCollections] = useState<{ id: string; name: string }[]>([]);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleEditValue, setTitleEditValue] = useState('');
+  const [screenshotFullscreen, setScreenshotFullscreen] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const sourceRef = useRef<HTMLDivElement>(null);
 
@@ -173,6 +174,14 @@ export default function ItemDetailPage() {
     const interval = setInterval(fetchItem, 3000);
     return () => clearInterval(interval);
   }, [id, item?.status, fetchItem]);
+
+  useEffect(() => {
+    const fn = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setScreenshotFullscreen(false);
+    };
+    window.addEventListener('keydown', fn);
+    return () => window.removeEventListener('keydown', fn);
+  }, []);
 
   async function handleRetry() {
     if (!id || actionLoading) return;
@@ -333,11 +342,18 @@ export default function ItemDetailPage() {
           {item.source_type === 'url' && item.url && (
             <div className="mt-2 text-[var(--fg-muted)]">
               {item.thumbnail_url && (
-                <img
-                  src={item.thumbnail_url}
-                  alt=""
-                  className="mb-2 h-[120px] w-full rounded border border-[var(--border-default)] object-cover object-top"
-                />
+                <button
+                  type="button"
+                  onClick={() => setScreenshotFullscreen(true)}
+                  className="mb-2 block w-full cursor-pointer text-left"
+                  title="Click to expand"
+                >
+                  <img
+                    src={item.thumbnail_url}
+                    alt="Screenshot preview"
+                    className="h-[120px] w-full rounded border border-[var(--border-default)] object-cover object-top"
+                  />
+                </button>
               )}
               <p>{item.domain || item.url.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}</p>
               <p className="mt-0.5 font-medium text-[var(--fg-default)]">{item.title || 'Untitled'}</p>
@@ -732,6 +748,45 @@ export default function ItemDetailPage() {
             Delete item
           </button>
         </div>
+
+        {screenshotFullscreen && item.thumbnail_url && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Screenshot fullscreen"
+            onClick={() => setScreenshotFullscreen(false)}
+          >
+            <div
+              className="relative flex max-h-[90vh] max-w-[90vw] flex-col items-center gap-3"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={item.thumbnail_url}
+                alt="Screenshot"
+                className="max-h-[85vh] max-w-full rounded object-contain"
+              />
+              <div className="flex items-center gap-2">
+                <a
+                  href={item.thumbnail_url}
+                  download="screenshot.jpg"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded border border-[var(--border-default)] bg-[var(--bg-default)] px-3 py-1.5 text-sm font-medium text-[var(--fg-default)] hover:bg-[var(--bg-inset)]"
+                >
+                  Download image
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setScreenshotFullscreen(false)}
+                  className="rounded border border-[var(--border-default)] bg-[var(--bg-default)] px-3 py-1.5 text-sm font-medium text-[var(--fg-default)] hover:bg-[var(--bg-inset)]"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </main>
     </AppShell>
