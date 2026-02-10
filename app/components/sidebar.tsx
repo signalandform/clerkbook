@@ -94,7 +94,7 @@ export function Sidebar() {
         <select
           value={theme}
           onChange={(e) => setTheme(e.target.value as ThemeValue)}
-          className="filter-select mb-2 w-full"
+          className="filter-select px-2 py-1.5 mb-2 w-full"
           aria-label="Theme"
         >
           <option value="light">Light</option>

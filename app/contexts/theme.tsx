@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useSyncExternalStore,
   useState,
   type ReactNode,
 } from 'react';
@@ -28,12 +29,18 @@ function getStoredTheme(): ThemeValue {
   return 'system';
 }
 
-function getEffectiveTheme(theme: ThemeValue): 'light' | 'dark' {
-  if (theme === 'system') {
-    if (typeof window === 'undefined') return 'light';
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  }
-  return theme;
+function subscribeSystemPreference(callback: () => void) {
+  const media = window.matchMedia('(prefers-color-scheme: dark)');
+  media.addEventListener('change', callback);
+  return () => media.removeEventListener('change', callback);
+}
+
+function getSystemPrefersDarkSnapshot(): boolean {
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+function getServerSnapshot(): boolean {
+  return false;
 }
 
 export function useTheme() {
@@ -44,9 +51,13 @@ export function useTheme() {
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<ThemeValue>('system');
-  const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'dark'>(() =>
-    getEffectiveTheme('system')
+  const systemPrefersDark = useSyncExternalStore(
+    subscribeSystemPreference,
+    getSystemPrefersDarkSnapshot,
+    getServerSnapshot
   );
+  const effectiveTheme: 'light' | 'dark' =
+    theme === 'system' ? (systemPrefersDark ? 'dark' : 'light') : theme;
 
   const setTheme = useCallback((value: ThemeValue) => {
     setThemeState(value);
@@ -60,19 +71,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const stored = getStoredTheme();
     setThemeState(stored);
     document.documentElement.dataset.theme = stored;
-    setEffectiveTheme(getEffectiveTheme(stored));
   }, []);
-
-  useEffect(() => {
-    if (theme !== 'system') {
-      setEffectiveTheme(theme);
-      return;
-    }
-    const media = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = () => setEffectiveTheme(media.matches ? 'dark' : 'light');
-    media.addEventListener('change', handler);
-    return () => media.removeEventListener('change', handler);
-  }, [theme]);
 
   const value = useMemo<ThemeContextValue>(
     () => ({ theme, setTheme, effectiveTheme }),
