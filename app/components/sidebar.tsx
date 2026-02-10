@@ -17,7 +17,12 @@ function navLinkClass(active: boolean) {
   }`;
 }
 
-export function Sidebar() {
+type SidebarProps = {
+  open?: boolean;
+  onClose?: () => void;
+};
+
+export function Sidebar({ open = true, onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -55,7 +60,11 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="flex w-[200px] shrink-0 flex-col border-r border-[var(--border-default)] bg-[var(--bg-inset)]">
+    <aside
+      className={`flex w-[200px] shrink-0 flex-col border-r border-[var(--border-default)] bg-[var(--bg-inset)] transition-transform duration-200 ease-out md:relative md:translate-x-0 ${
+        open ? 'translate-x-0' : '-translate-x-full'
+      } fixed inset-y-0 left-0 z-50 md:relative`}
+    >
       <nav className="flex flex-col gap-0.5 p-3">
         <Link href="/library" className="flex items-center gap-2 px-3 py-2 text-[var(--fg-default)] hover:opacity-80">
           <Image
