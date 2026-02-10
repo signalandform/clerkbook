@@ -476,7 +476,7 @@ export default function ItemDetailPage() {
           </section>
         )}
 
-        {false && item.contacts &&
+        {false && item?.contacts &&
           ((item.contacts.emails?.length ?? 0) > 0 ||
             (item.contacts.phones?.length ?? 0) > 0 ||
             (item.contacts.addresses?.length ?? 0) > 0 ||
