@@ -18,8 +18,47 @@
   --draft-muted: #f6f8fa;
 }
 
+/* Explicit light (overrides system dark) */
+html[data-theme="light"] {
+  --fg-default: #1f2328;
+  --fg-muted: #59636e;
+  --accent: #0969da;
+  --success: #1a7f37;
+  --danger: #cf222e;
+  --bg-default: #ffffff;
+  --bg-inset: #f6f8fa;
+  --border-default: #d0d7de;
+  --border-muted: rgba(31, 35, 40, 0.15);
+  --control-bg: #f6f8fa;
+  --btn-primary: #238636;
+  --btn-primary-hover: #2ea043;
+  --success-muted: #dafbe1;
+  --danger-muted: #ffebe9;
+  --draft-muted: #f6f8fa;
+}
+
+/* Explicit dark */
+html[data-theme="dark"] {
+  --fg-default: #e6edf3;
+  --fg-muted: #8b949e;
+  --accent: #58a6ff;
+  --success: #3fb950;
+  --danger: #f85149;
+  --bg-default: #0d1117;
+  --bg-inset: #161b22;
+  --border-default: #30363d;
+  --border-muted: rgba(240, 246, 252, 0.1);
+  --control-bg: #0d1117;
+  --btn-primary: #238636;
+  --btn-primary-hover: #2ea043;
+  --success-muted: rgba(46, 160, 67, 0.15);
+  --danger-muted: rgba(248, 81, 73, 0.15);
+  --draft-muted: #21262d;
+}
+
+/* System: follow OS preference when theme is not explicit light */
 @media (prefers-color-scheme: dark) {
-  :root {
+  html:not([data-theme="light"]) {
     --fg-default: #e6edf3;
     --fg-muted: #8b949e;
     --accent: #58a6ff;

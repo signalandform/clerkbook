@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ToastProvider } from "@/app/contexts/toast";
+import { ThemeProvider } from "@/app/contexts/theme";
 
 export const metadata: Metadata = {
   title: "Citestack",
@@ -16,7 +17,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <ToastProvider>{children}</ToastProvider>
+        <ToastProvider>
+          <ThemeProvider>{children}</ThemeProvider>
+        </ToastProvider>
       </body>
     </html>
   );

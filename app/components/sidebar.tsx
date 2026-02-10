@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { useTheme, type ThemeValue } from '@/app/contexts/theme';
 
 type Collection = { id: string; name: string; created_at: string };
 
@@ -21,6 +22,7 @@ export function Sidebar() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [collections, setCollections] = useState<Collection[]>([]);
+  const { theme, setTheme, effectiveTheme } = useTheme();
 
   const collectionId = pathname === '/library' ? searchParams.get('collection') ?? null : null;
 
@@ -45,7 +47,13 @@ export function Sidebar() {
     <aside className="flex w-[200px] shrink-0 flex-col border-r border-[var(--border-default)] bg-[var(--bg-inset)]">
       <nav className="flex flex-col gap-0.5 p-3">
         <Link href="/library" className="flex items-center gap-2 px-3 py-2 text-[var(--fg-default)] hover:opacity-80">
-          <Image src="/logo.png" alt="Citestack" width={28} height={28} className="shrink-0" />
+          <Image
+            src={effectiveTheme === 'dark' ? '/logowhite.png' : '/logo.png'}
+            alt="Citestack"
+            width={28}
+            height={28}
+            className="shrink-0"
+          />
           <span className="font-semibold">Citestack</span>
         </Link>
         <Link href="/library" className={navLinkClass(pathname === '/library')}>
@@ -80,6 +88,19 @@ export function Sidebar() {
             </Link>
           ))}
         </div>
+      </div>
+      <div className="border-t border-[var(--border-default)] px-3 py-2">
+        <p className="mb-2 px-3 text-xs font-medium text-[var(--fg-muted)]">Appearance</p>
+        <select
+          value={theme}
+          onChange={(e) => setTheme(e.target.value as ThemeValue)}
+          className="filter-select mb-2 w-full"
+          aria-label="Theme"
+        >
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+          <option value="system">System</option>
+        </select>
       </div>
       <div className="border-t border-[var(--border-default)] px-3 py-2">
         <div className="flex flex-col gap-0.5">
