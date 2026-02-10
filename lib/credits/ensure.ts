@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { DEFAULT_MONTHLY_GRANT } from './constants';
+import { DEFAULT_MONTHLY_GRANT_FREE } from './constants';
 
 function firstOfNextMonthUTC(): string {
   const now = new Date();
@@ -23,8 +23,9 @@ export async function ensureUserCredits(
   await admin.from('user_credits').upsert(
     {
       user_id: userId,
-      balance: DEFAULT_MONTHLY_GRANT,
-      monthly_grant: DEFAULT_MONTHLY_GRANT,
+      plan: 'free',
+      balance: DEFAULT_MONTHLY_GRANT_FREE,
+      monthly_grant: DEFAULT_MONTHLY_GRANT_FREE,
       reset_at: resetAt,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),

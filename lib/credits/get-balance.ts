@@ -6,6 +6,7 @@ export type BalanceResult = {
   balance: number;
   resetAt: string;
   monthlyGrant: number;
+  plan: string;
 };
 
 /**
@@ -20,7 +21,7 @@ export async function getBalance(
 
   const { data: row, error } = await admin
     .from('user_credits')
-    .select('balance, reset_at, monthly_grant')
+    .select('balance, reset_at, monthly_grant, plan')
     .eq('user_id', userId)
     .single();
 
@@ -29,6 +30,7 @@ export async function getBalance(
       balance: 0,
       resetAt: new Date().toISOString(),
       monthlyGrant: 0,
+      plan: 'free',
     };
   }
 
@@ -36,5 +38,6 @@ export async function getBalance(
     balance: Number(row.balance) ?? 0,
     resetAt: row.reset_at ?? new Date().toISOString(),
     monthlyGrant: Number(row.monthly_grant) ?? 0,
+    plan: String(row.plan ?? 'free'),
   };
 }

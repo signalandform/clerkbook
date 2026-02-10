@@ -1,4 +1,6 @@
 export const DEFAULT_MONTHLY_GRANT = 100;
+/** Free tier monthly grant (Billing & Usage). */
+export const DEFAULT_MONTHLY_GRANT_FREE = 50;
 
 export const REASON = {
   ENRICH_FULL: 'enrich_item_full',

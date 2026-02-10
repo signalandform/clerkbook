@@ -5,5 +5,7 @@ export { ensureUserCredits } from './ensure';
 export { grantMonthlyCreditsIfDue } from './grant-monthly';
 export { getBalance } from './get-balance';
 export type { BalanceResult } from './get-balance';
+export { listCreditLedger } from './list-ledger';
+export type { LedgerEntry } from './list-ledger';
 export { spendCredits } from './spend';
 export type { SpendOptions } from './spend';
