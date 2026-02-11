@@ -214,27 +214,6 @@ export default function AccountPage() {
           )}
         </div>
 
-        <h2 className="mt-8 text-lg font-semibold text-[var(--fg-default)]">Marketing emails</h2>
-        <div className="mt-4 rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] p-4 text-sm text-[var(--fg-default)]">
-          {marketingEmails === null ? (
-            <p className="text-[var(--fg-muted)]">Loading…</p>
-          ) : (
-            <div className="flex items-start gap-2">
-              <input
-                id="account_marketing_emails"
-                type="checkbox"
-                checked={marketingEmails}
-                disabled={marketingSaving}
-                onChange={(e) => handleMarketingChange(e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-[var(--border-default)] text-[var(--accent)] focus:ring-[var(--accent)]"
-              />
-              <label htmlFor="account_marketing_emails" className="text-[var(--fg-default)]">
-                I’d like to receive marketing emails (product updates, tips, offers).
-              </label>
-            </div>
-          )}
-        </div>
-
         <h2 className="mt-8 text-lg font-semibold text-[var(--fg-default)]">Billing & Usage</h2>
         <div className="mt-4 rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] p-4 text-sm text-[var(--fg-default)]">
           {usageLoading ? (
@@ -257,6 +236,27 @@ export default function AccountPage() {
               jack@signalandformllc.com
             </a>
           </p>
+        </div>
+
+        <h2 className="mt-8 text-lg font-semibold text-[var(--fg-default)]">Marketing emails</h2>
+        <div className="mt-4 rounded-lg border border-[var(--border-default)] bg-[var(--bg-inset)] p-4 text-sm text-[var(--fg-default)]">
+          {marketingEmails === null ? (
+            <p className="text-[var(--fg-muted)]">Loading…</p>
+          ) : (
+            <div className="flex items-start gap-2">
+              <input
+                id="account_marketing_emails"
+                type="checkbox"
+                checked={marketingEmails}
+                disabled={marketingSaving}
+                onChange={(e) => handleMarketingChange(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-[var(--border-default)] text-[var(--accent)] focus:ring-[var(--accent)]"
+              />
+              <label htmlFor="account_marketing_emails" className="text-[var(--fg-default)]">
+                I'd like to receive marketing emails (product updates, tips, offers).
+              </label>
+            </div>
+          )}
         </div>
       </main>
     </AppShell>
