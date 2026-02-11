@@ -46,16 +46,18 @@ async function extractPdf(buffer: Buffer): Promise<string> {
 
   const PDFParse = (mod as { PDFParse?: unknown })?.PDFParse;
   if (typeof PDFParse === 'function') {
-    const parser = new (PDFParse as new () => {
-      load: (buf: Buffer) => Promise<void>;
-      getText: () => Promise<string>;
+    // pdf-parse@2 exports a PDFParse class which expects options in the constructor.
+    // Passing the data buffer here avoids relying on any mutable internal state.
+    const parser = new (PDFParse as new (opts: { data: Uint8Array | Buffer; verbosity?: number }) => {
+      getText: () => Promise<{ text?: string } | { text: string } | { text: string; pages?: unknown[] }>;
       destroy?: () => void | Promise<void>;
-    })();
+    })({ data: buffer, verbosity: 0 });
 
-    await parser.load(buffer);
-    const text = await parser.getText();
+    const result = await parser.getText();
     await parser.destroy?.();
-    return (text ?? '').trim();
+
+    const text = (result as { text?: string } | undefined)?.text ?? '';
+    return text.trim();
   }
 
   throw new Error('Unsupported pdf-parse export shape');
