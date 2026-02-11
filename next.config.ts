@@ -10,6 +10,13 @@ const nextConfig: NextConfig = {
   // This is required for pdfjs-dist optional polyfills (e.g., @napi-rs/canvas) in serverless.
   serverExternalPackages: ['@napi-rs/canvas', 'pdfjs-dist', 'pdf-parse'],
 
+  // Ensure pdf.js worker file makes it into serverless/standalone output.
+  // pdf-parse@2 uses a relative workerSrc ("./pdf.worker.mjs") which Next output tracing
+  // can omit unless explicitly included.
+  outputFileTracingIncludes: {
+    '*': ['node_modules/pdf-parse/dist/pdf-parse/cjs/pdf.worker.mjs'],
+  },
+
   async redirects() {
     return [
       { source: '/srtudents', destination: '/students', permanent: true },
