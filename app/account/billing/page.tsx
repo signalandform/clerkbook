@@ -20,7 +20,7 @@ async function startCheckout(body: { plan?: string; type?: string; pack?: string
   return { url: data.url };
 }
 
-export default function ComingSoonPage() {
+export default function BillingPage() {
   const { showToast } = useToast();
   const [loading, setLoading] = useState<LoadingKey>(null);
 
