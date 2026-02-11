@@ -2,6 +2,10 @@ import mammoth from 'mammoth';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { enqueueEnrichItem } from './enqueue-enrich';
 
+// Ensure Next.js output file tracing includes the optional canvas polyfill used by pdfjs-dist.
+// (pdfjs-dist may require this dynamically; static import ensures it is bundled for serverless.)
+import '@napi-rs/canvas';
+
 async function setItemFailed(
   admin: SupabaseClient,
   itemId: string,
